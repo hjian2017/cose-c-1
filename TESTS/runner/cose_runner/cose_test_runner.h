@@ -11,16 +11,16 @@
 * license agreement and/or in materials provided with the     *
 * binary distribution.                                        *
 ***************************************************************/
-#ifndef __CBOR_TEST_RUNNER_H__
-#define __CBOR_TEST_RUNNER_H__
+#ifndef __COSE_TEST_RUNNER_H__
+#define __COSE_TEST_RUNNER_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void RunAllCborTests(void);
+void RunAllCoseTests(void);
 
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-#endif // __CBOR_TEST_RUNNER_H__
+#endif // __COSE_TEST_RUNNER_H__

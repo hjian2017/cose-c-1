@@ -20,13 +20,13 @@
 #include "pal.h"
 
 #include "unity_fixture.h"
-#include "cbor_test_runner.h"
+#include "cose_test_runner.h"
 
 #include "mbed-trace/mbed_trace.h"
 #include "mbed-trace-helper.h"
 
 
-#define TRACE_GROUP     "cbor"  // Maximum 4 characters
+#define TRACE_GROUP     "cose"  // Maximum 4 characters
 
 extern bool dhcp_done;
 static int g_unity_status = EXIT_FAILURE;
@@ -37,7 +37,7 @@ static pal_args_t g_args = { 0 };
 *
 * Runs all tests in a task of its own
 */
-static void run_cbor_component_tests_task(pal_args_t *args)
+static void run_cose_component_tests_task(pal_args_t *args)
 {
     int rc = 0;
     bool success = 0;
@@ -50,7 +50,7 @@ static void run_cbor_component_tests_task(pal_args_t *args)
     if (myargv == NULL) {
         goto cleanup;
     }
-    myargv[0] = "cbor_component_tests";
+    myargv[0] = "cose_component_tests";
     myargv[1] = "-v";
     for (int i = 0; i < args->argc; i++) {
         myargv[i + 2] = args->argv[i];
@@ -69,7 +69,7 @@ static void run_cbor_component_tests_task(pal_args_t *args)
     }
 
     setvbuf(stdout, (char *)NULL, _IONBF, 0); /* Avoid buffering on test output */
-    tr_info("cbor_component_tests: Starting component tests...\n");
+    tr_info("cose_component_tests: Starting component tests...\n");
 
     // Wait until device is connected to the world
     while (dhcp_done == 0) {
@@ -77,14 +77,14 @@ static void run_cbor_component_tests_task(pal_args_t *args)
     }
     
     tr_cmdline("----< Test - Start >----\n");
-    rc = UnityMain(myargc, myargv, RunAllCborTests);
+    rc = UnityMain(myargc, myargv, RunAllCoseTests);
     tr_cmdline("----< Test - End >----\n");
 
     if (rc > 0) {
-        tr_error("cbor_component_tests: Test failed.\n");
+        tr_error("cose_component_tests: Test failed.\n");
     } else {
         g_unity_status = EXIT_SUCCESS;
-        tr_info("cbor_component_tests: Test passed.\n");
+        tr_info("cose_component_tests: Test passed.\n");
     }
 
 cleanup:
@@ -114,7 +114,7 @@ int main(int argc, char * argv[])
 
     success = initPlatform();
     if (success) {
-        success = runProgram(&run_cbor_component_tests_task, &g_args);
+        success = runProgram(&run_cose_component_tests_task, &g_args);
     }
 
     return success ? g_unity_status : EXIT_FAILURE;

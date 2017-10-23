@@ -14,8 +14,8 @@
 
 #include "unity_fixture.h"
 #include <stdio.h>
-void RunAllCborTests(void)
+void RunAllCoseTests(void)
 {
-	RUN_TEST_GROUP(CborTests);
+	RUN_TEST_GROUP(CoseTests);
 }
 
