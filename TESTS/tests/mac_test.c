@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cose.h>
-#include <cn-cbor/cn-cbor.h>
+#include <cn-cbor.h>
 
 #include "json.h"
-#include "test.h"
+#include "cose_tests.h"
 #include "context.h"
 
 #ifdef _MSC_VER

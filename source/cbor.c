@@ -1,4 +1,4 @@
-#include "cn-cbor/cn-cbor.h"
+#include "cn-cbor.h"
 #include <stdlib.h>
 #include <memory.h>
 

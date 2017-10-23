@@ -1,3 +1,7 @@
+
+#ifndef __COSE_TESTS_H__
+#define __COSE_TESTS_H__
+
 #ifndef _countof
 
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
@@ -52,7 +56,7 @@ void FreeContext(cn_cbor_context* pContext);
 #endif
 
 
-//  test.c
+//  cose_tests.c
 enum {
 	Attributes_MAC_protected=1,
 	Attributes_MAC0_protected,
@@ -99,3 +103,5 @@ int IsAlgorithmSupported(const cn_cbor * alg);
             if (cose_error.err != errorReturn) onFailure; \
         } else if (errorReturn != COSE_ERR_NONE) onFailure; \
     }
+
+#endif //__COSE_TESTS_H__

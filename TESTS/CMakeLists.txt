@@ -18,7 +18,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tests)
 set(TARGET_NAME "cose_tests$ENV{BINARY_SUFFIX}")
 # tests includes
 FILE(
-	GLOB_RECURSE  
+	GLOB_RECURSE
 	cose_tests_src
 
 	"${CMAKE_CURRENT_SOURCE_DIR}/runner/cose_main/*.c"
@@ -40,7 +40,5 @@ message ("*********************************************************************"
 message ("cose_tests_src = [[${cose_tests_src}]]")
 message ("*********************************************************************")
 
-
 CREATE_TEST_LIBRARY(${TARGET_NAME} "${cose_tests_src}" "")
-
 ADDSUBDIRS()

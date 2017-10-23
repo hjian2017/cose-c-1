@@ -5,7 +5,7 @@
 #include <memory.h>
 #include <assert.h>
 
-#include <cn-cbor/cn-cbor.h>
+#include <cn-cbor.h>
 
 #ifdef USE_CBOR_CONTEXT
 #include "context.h"

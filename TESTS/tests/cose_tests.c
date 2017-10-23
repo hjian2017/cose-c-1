@@ -1,24 +1,27 @@
-// test.c : Defines the entry point for the console application.
+//----------------------------------------------------------------------------
+//   The confidential and proprietary information contained in this file may
+//   only be used by a person authorised under and to the extent permitted
+//   by a subsisting licensing agreement from ARM Limited or its affiliates.
 //
+//          (C) COPYRIGHT 2013-2016 ARM Limited or its affiliates.
+//              ALL RIGHTS RESERVED
+//
+//   This entire notice must be reproduced on all copies of this file
+//   and copies of this file may only be made by a person if such person is
+//   permitted to do so under the terms of a subsisting license agreement
+//   from ARM Limited or its affiliates.
+//----------------------------------------------------------------------------
 
-#define _CRT_SECURE_NO_WARNINGS
-
+#include "unity_fixture.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <cose.h>
-#include <cn-cbor/cn-cbor.h>
+#include <cn-cbor.h>
 #include <assert.h>
-
-#ifndef _MSC_VER
-#include <dirent.h>
-#else
-#include <windows.h>
-#endif
-
 #include "json.h"
-
-#include "test.h"
+#include "cose_tests.h"
+#include "cose_test_vectors.h"
 
 int CFails = 0;
 
@@ -317,7 +320,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 	const cn_cbor * pValue;
 	int keyNew;
 	cn_cbor * pValueNew;
-	bool f = false;
+    bool f = false;
 
 	if (pAttributes == NULL) return true;
 	if (pAttributes->type != CN_CBOR_MAP) return false;
@@ -408,7 +411,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		// assert(f);
 	}
 
-	return true;
+	return f;
 }
 
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
@@ -565,8 +568,6 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 	return pKeyOut;
 }
 
-
-
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 bool Test_cn_cbor_array_replace()
@@ -598,354 +599,91 @@ bool Test_cn_cbor_array_replace()
 	return true;
 }
 
-
-void RunCorners()
+void RunAlgTest(const char * cbor_input_json_string)
 {
-	Test_cn_cbor_array_replace();
-	MAC_Corners();
-	MAC0_Corners();
-	Encrypt_Corners();
-	Enveloped_Corners();
-	Sign_Corners();
-	Sign0_Corners();
-	Recipient_Corners();
+    const cn_cbor *pControl = ParseString((char *)cbor_input_json_string, 0, strlen(cbor_input_json_string));
+
+    //
+    //  If we are given a file name, then process the file name
+    //
+
+    if (pControl == NULL) {
+        CFails += 1;
+        return;
+    }
+
+    //  To find out what we are doing we need to get the correct item
+
+    const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
+
+    if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
+        fprintf(stderr, "No or bad input section");
+        exit(1);
+    }
+
+    if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
+        if (ValidateMAC(pControl)) {
+            BuildMacMessage(pControl);
+        }
+    } else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+        if (ValidateMac0(pControl)) {
+            BuildMac0Message(pControl);
+        }
+    } else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+        if (ValidateEnveloped(pControl)) {
+            BuildEnvelopedMessage(pControl);
+        }
+    } else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+        if (ValidateSigned(pControl)) {
+            BuildSignedMessage(pControl);
+        }
+    } else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+        if (ValidateSign0(pControl)) {
+            BuildSign0Message(pControl);
+        }
+    } else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+        if (ValidateEncrypt(pControl)) {
+            BuildEncryptMessage(pControl);
+        }
+    }
+
+    return;
 }
 
-void RunMemoryTest(const char * szFileName)
+TEST_GROUP(CoseTests);
+
+TEST_SETUP(CoseTests)
 {
-#ifdef USE_CBOR_CONTEXT
-	unsigned int iFail;
-	const cn_cbor * pControl = ParseJson(szFileName);
-
-	if (pControl == NULL) {
-		CFails += 1;
-		return;
-	}
-
-	//
-	//  To find out what we are doing we need to get the correct item
-
-	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
-
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
-		fprintf(stderr, "No or bad input section");
-		exit(1);
-	}
-
-	//
-	bool fValidateDone = false;
-	bool fBuildDone = false;
-
-	for (iFail = 0; !fValidateDone || !fBuildDone; iFail++) {
-		allocator = CreateContext(iFail);
-
-		if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateMAC(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildMacMessage(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-		else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateMac0(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildMac0Message(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-		else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateEncrypt(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildEncryptMessage(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-		else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateEnveloped(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildEnvelopedMessage(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-		else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateSigned(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildSignedMessage(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-		else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-			if (!fValidateDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				ValidateSign0(pControl);
-				if (CFails == 0) fValidateDone = true;
-			}
-
-			if (!fBuildDone) {
-				allocator = CreateContext(iFail);
-				CFails = 0;
-				BuildSign0Message(pControl);
-				if (CFails == 0) fBuildDone = true;
-			}
-		}
-	}
-	CFails = 0;
-	allocator = NULL;
-#else
-	return;
-#endif
 }
 
-void RunFileTest(const char * szFileName)
+TEST_TEAR_DOWN(CoseTests)
 {
-	const cn_cbor * pControl = NULL;
-
-	pControl = ParseJson(szFileName);
-
-	//
-	//  If we are given a file name, then process the file name
-	//
-
-	if (pControl == NULL) {
-		CFails += 1;
-		return;
-	}
-
-	//  To find out what we are doing we need to get the correct item
-
-	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
-
-	if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
-		fprintf(stderr, "No or bad input section");
-		exit(1);
-	}
-
-	if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-		if (ValidateMAC(pControl)) {
-			BuildMacMessage(pControl);
-		}
-	}
-	else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
-		if (ValidateMac0(pControl)) {
-			BuildMac0Message(pControl);
-		}
-	}
-	else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-		if (ValidateEnveloped(pControl)) {
-			BuildEnvelopedMessage(pControl);
-		}
-	}
-	else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-		if (ValidateSigned(pControl)) {
-			BuildSignedMessage(pControl);
-		}
-	}
-	else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-		if (ValidateSign0(pControl)) {
-			BuildSign0Message(pControl);
-		}
-	}
-	else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-		if (ValidateEncrypt(pControl)) {
-			BuildEncryptMessage(pControl);
-		}
-	}
-
-	return;
 }
 
-#ifdef _MSC_VER
-void RunTestsInDirectory(const char * szDir)
+TEST(CoseTests, Corner_Sign0)
 {
-	int cFailTotal = 0;
-	WIN32_FIND_DATA FindFileData;
-	HANDLE hFind;
-	char rgchFullName[2 * 1024];
-
-	if (strlen(szDir) + 7 >= sizeof(rgchFullName)) {
-		fprintf(stderr, "Buffer overflow error\n");
-		exit(1);
-	}
-	strcpy(rgchFullName, szDir);
-	strcat(rgchFullName, "\\");
-	size_t ich = strlen(rgchFullName);
-	strcat(rgchFullName, "*.json");
-
-	hFind = FindFirstFile(rgchFullName, &FindFileData);
-	if (hFind == INVALID_HANDLE_VALUE)
-	{
-		printf("FindFirstFile failed (%d)\n", GetLastError());
-		return;
-	}
-
-	do {
-		rgchFullName[ich] = 0;
-		if (ich + strlen(FindFileData.cFileName) >= sizeof(rgchFullName)) {
-			fprintf(stderr, "Buffer overflow problem\n");
-			exit(1);
-		}
-		strcat(rgchFullName, FindFileData.cFileName);
-		printf("Run test '%s'", rgchFullName);
-
-		CFails = 0;
-		RunFileTest(rgchFullName);
-		if (CFails == 0) printf(" PASS\n");
-		else printf(" FAILED\n");
-		cFailTotal += CFails;
-	} while (FindNextFile(hFind, &FindFileData));
-
-	FindClose(hFind);
-
-	CFails = cFailTotal;
-	return;
+    CFails = 0;
+    Sign0_Corners();
+    TEST_ASSERT_EQUAL_INT(0, CFails);
 }
 
-#else
-void RunTestsInDirectory(const char * szDir)
+TEST(CoseTests, Corner_Sign)
 {
-	DIR * dirp = opendir(szDir);
-	struct dirent * dp;
-	char rgchFullName[2 * 1024];
-	int ich;
-	int cFailTotal = 0;
-
-	if (dirp == NULL) {
-		fprintf(stderr, "Cannot open directory '%s'\n", szDir);
-		exit(1);
-	}
-	if (strlen(szDir) >= sizeof(rgchFullName) - 3) {
-		fprintf(stderr, "Buffer overflow problem\n");
-		exit(1);
-	}
-	strcpy(rgchFullName, szDir);
-	strcat(rgchFullName, "/");
-	ich = strlen(rgchFullName);
-
-	while ((dp = readdir(dirp)) != NULL) {
-		int cch = strlen(dp->d_name);
-		if (cch < 4) continue;
-		rgchFullName[ich] = 0;
-		if (ich + strlen(dp->d_name) >= sizeof(rgchFullName) - 2) {
-			fprintf(stderr, "Buffer overflow problem\n");
-			exit(1);
-		}
-		strcat(rgchFullName, dp->d_name);
-		printf("Run test '%s'", rgchFullName);
-		CFails = 0;
-		RunFileTest(rgchFullName);
-		if (CFails == 0) printf(" PASS\n");
-		else printf(" FAILED\n");
-		cFailTotal += CFails;
-	}
-
-	(void)closedir(dirp);
-	exit(cFailTotal);
+    CFails = 0;
+    Sign_Corners();
+    TEST_ASSERT_EQUAL_INT(0, CFails);
 }
-#endif // _MSCVER
 
-int main(int argc, char ** argv)
+TEST(CoseTests, Sign1)
 {
-	int i;
-	const char * szWhere = NULL;
-	bool fDir = false;
-        bool fCorners = false;
-		bool fMemory = false;
+    CFails = 0;
+    RunAlgTest(sign_pass_01);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
 
-	for (i = 1; i < argc; i++) {
-		printf("arg: '%s'\n", argv[i]);
-		if (argv[i][0] == '-') {
-			if (strcmp(argv[i], "--dir") == 0) {
-				fDir = true;
-			}
-			else if (strcmp(argv[i], "--corners") == 0) {
-				fCorners = true;
-			}
-			else if (strcmp(argv[i], "--memory") == 0) {
-				fMemory = true;
-			}
-		}
-		else {
-			szWhere = argv[i];
-		}
-	}
-
-	//
-	//  If we are given a file name, then process the file name
-	//
-
-	if (fMemory) {
-		if (szWhere == NULL) {
-			fprintf(stderr, "Must specify a file name\n");
-			exit(1);
-		}
-		RunMemoryTest(szWhere);
-	}
-	else if (szWhere != NULL) {
-		if (szWhere == NULL) {
-			fprintf(stderr, "Must specify a file name\n");
-			exit(1);
-		}
-		if (fDir) RunTestsInDirectory(szWhere);
-		else RunFileTest(szWhere);
-	}
-	else if (fCorners) {
-		RunCorners();
-	}
-	else {
-#ifdef USE_CBOR_CONTEXT
-		allocator = CreateContext((unsigned int) -1);
-#endif
-		MacMessage();
-		SignMessage();
-		EncryptMessage();
-#ifdef USE_CBOR_CONTEXT
-		FreeContext(allocator);
-#endif
-	}
-
-	if (CFails > 0) fprintf(stderr, "Failed %d tests\n", CFails);
-	else fprintf(stderr, "SUCCESS\n");
-
-	exit(CFails);
+TEST_GROUP_RUNNER(CoseTests)
+{
+    RUN_TEST_CASE(CoseTests, Corner_Sign0);
+    RUN_TEST_CASE(CoseTests, Corner_Sign);
+    RUN_TEST_CASE(CoseTests, Sign1);    
 }
