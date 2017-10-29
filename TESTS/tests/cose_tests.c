@@ -22,6 +22,7 @@
 #include "json.h"
 #include "cose_tests.h"
 #include "cose_test_vectors.h"
+#include "dba_log.h"
 
 int CFails = 0;
 
@@ -666,14 +667,84 @@ TEST_TEAR_DOWN(CoseTests)
 {
 }
 
-TEST(CoseTests, sign0_pass_01)
+TEST(CoseTests, sign_pass_01)
 {
     CFails = 0;
     RunAlgTest(sign_pass_01);
     TEST_ASSERT_EQUAL_INT(0, CFails);
 }
 
+TEST(CoseTests, sign_pass_02)
+{
+    CFails = 0;
+    RunAlgTest(sign_pass_02);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_pass_03)
+{
+    CFails = 0;
+    RunAlgTest(sign_pass_03);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_01)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_01);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_02)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_02);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_03)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_03);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_04)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_04);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_05)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_05);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+TEST(CoseTests, sign_fail_06)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_06);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+
+
 TEST_GROUP_RUNNER(CoseTests)
 {
-    RUN_TEST_CASE(CoseTests, sign0_pass_01);
+    // Positives
+    RUN_TEST_CASE(CoseTests, sign_pass_01);
+    RUN_TEST_CASE(CoseTests, sign_pass_02);
+    RUN_TEST_CASE(CoseTests, sign_pass_03);
+    
+    // Negatives
+    RUN_TEST_CASE(CoseTests, sign_fail_01);
+    RUN_TEST_CASE(CoseTests, sign_fail_02);
+    RUN_TEST_CASE(CoseTests, sign_fail_03);
+    RUN_TEST_CASE(CoseTests, sign_fail_04);
+    RUN_TEST_CASE(CoseTests, sign_fail_05);
+    RUN_TEST_CASE(CoseTests, sign_fail_06);
 }
+
+

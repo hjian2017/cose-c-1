@@ -255,8 +255,9 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	cn_cbor_errback cbor_error;
 	cn_cbor * cn = NULL;
 	cn_cbor * cn2;
-	size_t cbToSign;
-	byte * pbToSign = NULL;
+	size_t cbToSign = 0;
+    int bytesWritten = 0;
+    byte * pbToSign = NULL;
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
@@ -287,13 +288,14 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	cn = NULL;
 
 
-	cbToSign = cn_cbor_encode_size(pArray);
-	CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
-	pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
-	CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbToSign, 0, cbToSign, pArray), COSE_ERR_CBOR);
+    cbToSign = cn_cbor_encode_size(pArray);
+    CHECK_CONDITION(cbToSign > 0, COSE_ERR_CBOR);
+    pbToSign = (byte *)COSE_CALLOC(cbToSign, 1, context);
+    CHECK_CONDITION(pbToSign != NULL, COSE_ERR_OUT_OF_MEMORY);
+    bytesWritten = cn_cbor_encoder_write(pArray, pbToSign, cbToSign, &cbor_error);
+    CHECK_CONDITION(bytesWritten > 0, COSE_ERR_CBOR);
 
-	*ppbToSign = pbToSign;
+    *ppbToSign = pbToSign;
 	*pcbToSign = cbToSign;
 	pbToSign = NULL;
 
@@ -403,11 +405,10 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
 		alg = (int)cn->v.uint;
 	}
 
-	//  Build protected headers
+    //  Build protected headers
+    if (!CreateSign0AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
 
-	if (!CreateSign0AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
-
-	switch (alg) {
+    switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
 		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 256, pbToSign, cbToSign, perr)) goto errorReturn;

@@ -258,6 +258,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	bool fFail = false;
 	bool fFailBody = false;
 	bool fNoAlgSupport = false;
+    cose_errback cose_error;
 
 	pFail = cn_cbor_mapget_string(pControl, "fail");
 	if ((pFail != NULL) && (pFail->type == CN_CBOR_TRUE)) {
@@ -285,7 +286,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	if (!IsAlgorithmSupported(alg)) fNoAlgSupport = true;
 
 	pFail = cn_cbor_mapget_string(pInput, "fail");
-	if (COSE_Sign0_validate(hSig, pkey, NULL)) {
+	if (COSE_Sign0_validate(hSig, pkey, &cose_error)) {
 		if (fNoAlgSupport) {
 			fFail = true;
 		}

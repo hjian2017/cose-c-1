@@ -797,6 +797,7 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 	cn_cbor * pAuthData;
 	cn_cbor * pItem;
 	cn_cbor * ptmp = NULL;
+    int bytesWritten = 0;
 
 	//  Build authenticated data
 	pbAuthData = NULL;
@@ -828,7 +829,8 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 	cbAuthData = cn_cbor_encode_size(pAuthData);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION((size_t)cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+    bytesWritten = cn_cbor_encoder_write(pAuthData, pbAuthData, cbAuthData, &cbor_error);
+	CHECK_CONDITION((size_t)bytesWritten == cbAuthData, COSE_ERR_CBOR);
 
 	*ppbAAD = pbAuthData;
 	*pcbAAD = cbAuthData;

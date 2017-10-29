@@ -54,9 +54,9 @@ const cn_cbor * ParseString(char * rgch, int ib, int cch)
 		case ',':
 			break;
 
-		case '"':
-			for (ib2 = ib + 1; ib2 < cch; ib2++) if (rgch[ib2] == '"') break;
-			rgch[ib2] = 0;
+        case '"':
+            for (ib2 = ib + 1; ib2 < cch; ib2++) if (rgch[ib2] == '"') break;
+            rgch[ib2] = 0;
 			node = cn_cbor_string_create(&rgch[ib+1], CBOR_CONTEXT_PARAM_COMMA NULL);
 			// rgch[ib2] = '"';
 			ib = ib2;

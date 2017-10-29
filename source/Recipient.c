@@ -1217,6 +1217,7 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	cn_cbor * cnParam;
 	byte * pbContext = NULL;
 	size_t cbContext;
+    int bytesWritten = 0;
 
 	pArray = cn_cbor_array_create(CBOR_CONTEXT_PARAM_COMMA &cbor_error);
 	CHECK_CONDITION_CBOR(pArray != NULL, cbor_error);
@@ -1341,7 +1342,8 @@ bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbConte
 	CHECK_CONDITION(cbContext > 0, COSE_ERR_CBOR);
 	pbContext = (byte *)COSE_CALLOC(cbContext, 1, context);
 	CHECK_CONDITION(pbContext != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbContext, 0, cbContext, pArray), COSE_ERR_CBOR);
+    bytesWritten = cn_cbor_encoder_write(pArray, pbContext, cbContext, &cbor_error);
+    CHECK_CONDITION(bytesWritten > 0, COSE_ERR_CBOR);
 
 	*ppbContext = pbContext;
 	*pcbContext = cbContext;

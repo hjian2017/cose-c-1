@@ -881,16 +881,16 @@ EC_KEY * ECKey_From(const cn_cbor * pKey, int * cbGroup, cose_errback * perr)
 	CHECK_CONDITION(EC_POINT_oct2point(ecgroup, pPoint, rgbKey, cbKey, NULL) == 1, COSE_ERR_CRYPTO_FAIL);
 	CHECK_CONDITION(EC_KEY_set_public_key(pNewKey, pPoint) == 1, COSE_ERR_CRYPTO_FAIL);
 
-	p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
-	if (p != NULL) {
-		BIGNUM * pbn;
+    p = cn_cbor_mapget_int(pKey, COSE_Key_EC_d);
+    if (p != NULL) {
+        BIGNUM * pbn;
 
-		pbn = BN_bin2bn(p->v.bytes, (int) p->length, NULL);
-		CHECK_CONDITION(pbn != NULL, COSE_ERR_CRYPTO_FAIL);
-		CHECK_CONDITION(EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
-	}
-	
-	return pNewKey;
+        pbn = BN_bin2bn(p->v.bytes, (int)p->length, NULL);
+        CHECK_CONDITION(pbn != NULL, COSE_ERR_CRYPTO_FAIL);
+        CHECK_CONDITION(EC_KEY_set_private_key(pNewKey, pbn) == 1, COSE_ERR_CRYPTO_FAIL);
+    }
+
+    return pNewKey;
 
 errorReturn:
 	if (pNewKey != NULL) EC_KEY_free(pNewKey);

@@ -230,6 +230,7 @@ bool _COSE_Mac_Build_AAD(COSE * pCose, const char * szContext, byte ** ppbAuthDa
 	cn_cbor * pcn;
 	size_t cbAuthData;
 	byte * pbAuthData = NULL;
+    int bytesWritten = 0;
 
 	//  Build authenticated data
 	//  Protected headers
@@ -281,7 +282,8 @@ bool _COSE_Mac_Build_AAD(COSE * pCose, const char * szContext, byte ** ppbAuthDa
 	CHECK_CONDITION(cbAuthData > 0, COSE_ERR_CBOR);
 	pbAuthData = (byte *)COSE_CALLOC(cbAuthData, 1, context);
 	CHECK_CONDITION(pbAuthData != NULL, COSE_ERR_OUT_OF_MEMORY);
-	CHECK_CONDITION(cn_cbor_encoder_write(pbAuthData, 0, cbAuthData, pAuthData) == cbAuthData, COSE_ERR_CBOR);
+    bytesWritten = cn_cbor_encoder_write(pAuthData, pbAuthData, cbAuthData, &cbor_error);
+	CHECK_CONDITION(bytesWritten == cbAuthData, COSE_ERR_CBOR);
 
 	*ppbAuthData = pbAuthData;
 	*pcbAuthData = cbAuthData;

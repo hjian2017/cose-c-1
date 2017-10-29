@@ -206,8 +206,17 @@ errorReturn:
 
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
 {
+    cn_cbor_errback errp;
+    size_t encodedSize = 0;
+
 	if (rgb == NULL) return cn_cbor_encode_size(((COSE *)msg)->m_cbor) + ib;
-	return cn_cbor_encoder_write(rgb, ib, cb, ((COSE*)msg)->m_cbor);
+    encodedSize = cn_cbor_encoder_write(((COSE*)msg)->m_cbor, rgb, cb, &errp);
+
+    if (errp.err != CN_CBOR_NO_ERROR) {
+        return 0;  // failure
+    }
+
+    return encodedSize; // success
 }
 
 
@@ -321,6 +330,9 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pMessage->m_allocContext;
 #endif // USE_CBOR_CONTEXT
+    cn_cbor_errback cbor_error;
+    int bytesWritten = 0;
+
 
 	pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
 	if ((pProtected != NULL) &&(pProtected->type != CN_CBOR_INVALID)) {
@@ -334,7 +346,8 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
 		pbProtected = (byte *)COSE_CALLOC(cbProtected, 1, context);
 		CHECK_CONDITION(pbProtected != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-		CHECK_CONDITION(cn_cbor_encoder_write(pbProtected, 0, cbProtected, pMessage->m_protectedMap) == cbProtected, COSE_ERR_CBOR);
+        bytesWritten = cn_cbor_encoder_write(pMessage->m_protectedMap, pbProtected, cbProtected, &cbor_error);
+		CHECK_CONDITION(bytesWritten == cbProtected, COSE_ERR_CBOR);
 	}
 	else {
 		cbProtected = 0;
