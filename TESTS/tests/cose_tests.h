@@ -57,7 +57,7 @@ void FreeContext(cn_cbor_context* pContext);
 
 
 //  cose_tests.c
-enum {
+typedef enum {
 	Attributes_MAC_protected=1,
 	Attributes_MAC0_protected,
 	Attributes_Recipient_protected,
