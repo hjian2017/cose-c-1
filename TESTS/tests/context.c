@@ -2,7 +2,7 @@
 #ifdef _MSC_VER
 #endif
 #include <stdio.h>
-#include <memory.h>
+#include <string.h>
 #include <assert.h>
 
 #include <cn-cbor.h>

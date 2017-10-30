@@ -3,7 +3,7 @@
 */
 
 #include <stdlib.h>
-#include <memory.h>
+#include <string.h>
 
 #include "cose.h"
 #include "cose_int.h"
