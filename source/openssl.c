@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <stdbool.h>
 
+// For reference only. Use mbedtls.c for all platforms.
 #undef USE_OPEN_SSL
 #ifdef USE_OPEN_SSL
 

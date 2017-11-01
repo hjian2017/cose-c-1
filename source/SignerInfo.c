@@ -316,12 +316,10 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 
     // FIXME: This algorithm is currently not in use. When we do use it we might want it to be done like _COSE_Sign0_validate
 
-    bool status = false;
     byte pKey[1024];
     size_t keySize;
-    int groupSize;
 
-    if (!GetECKeyFromCbor(pSigner->m_pkey, pKey, sizeof(pKey), &keySize, perr)) {
+    if (!GetECKeyFromCoseKeyObj(pSigner->m_pkey, pKey, sizeof(pKey), &keySize, perr)) {
         return false;
     }
 

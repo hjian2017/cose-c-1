@@ -285,3 +285,4 @@ enum {
 #define COSE_CounterSign_object 1000
 
 #endif
+

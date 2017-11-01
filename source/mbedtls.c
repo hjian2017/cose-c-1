@@ -27,8 +27,11 @@
 #define COSE_Key_EC_X -2
 #define COSE_Key_EC_Y -3
 
-// Must add parameter for ecKeyOut size and return an error
-bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr)
+// groupSizeBytes is always the size of the key / 2.
+// keySize has an extra byte containing compression type, so the actual key size is keySize - 1
+#define EC_GROUP_SIZE(keySize) ((keySize - 1) / 2)
+
+bool GetECKeyFromCoseKeyObj(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr)
 {
     byte rgbKey[512 + 1];
     size_t rgbKeyBytes;
@@ -40,6 +43,8 @@ bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBuffer
 
     // Assume success at first
     perr->err = COSE_ERR_NONE;
+
+    DBA_ERR_RECOVERABLE_RETURN_IF((coseObj == NULL), (perr->err = COSE_ERR_INVALID_PARAMETER), "Failed for cn_cbor_mapget_int getting EC Curve");
 
     p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_Curve);
     DBA_ERR_RECOVERABLE_GOTO_IF((p == NULL), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int getting EC Curve");
@@ -117,14 +122,9 @@ bool ECDSA_Verify(
     cose_errback error = { 0 };
     if (perr == NULL) perr = &error;
 
-    //byte rawECKey[512 + 1];
-    //size_t rawECKeySize;
-
     int groupSizeBytes;
 
-    // groupSizeBytes always the size of the key / 2.
-    // keySize has an extra byte containing compression type, so the actual key size is keySize - 1
-    groupSizeBytes = ((keySize - 1) / 2);
+    groupSizeBytes =  EC_GROUP_SIZE(keySize);
 
     // FIXME: for demo purposes it is assumed that we're getting the key in DER format from the KCM,
     // when we will switch to a "proof of possession" we have to parse a CBOR object to extract the public key material.
@@ -145,13 +145,6 @@ bool ECDSA_Verify(
 
     palStatus = pal_sha256(rgbToSign, cbToSign, rgbDigest);
     DBA_ERR_RECOVERABLE_GOTO_IF((palStatus != PAL_SUCCESS), (perr->err = COSE_ERR_CRYPTO_FAIL), EndWithError, "Failed for pal_sha256 (paStatus = %" PRIu32 ")", palStatus);
-
-
-    // Get the EC raw key
-/*
-    success = GetECKey(pKeyObj, rawECKey, &rawECKeySize, &groupSizeBytes, perr);
-    DBA_ERR_RECOVERABLE_GOTO_IF((!success), (perr->err = perr->err), EndWithError, "Failed for GetECKey");
-*/
 
     // Fetch the signature to check against and verify it is legit
 

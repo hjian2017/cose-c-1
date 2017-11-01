@@ -193,25 +193,29 @@ HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_typ
     return h;
 
 errorReturn:
-    COSE_FREE(cbor, context);
     return NULL;
 
 }
 // This decodes and calls COSE_Init
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	cn_cbor * cose = NULL;
-	cn_cbor_errback cbor_err;
-	HCOSE h;
+    cn_cbor * cose = NULL;
+    cn_cbor_errback cbor_err;
+    HCOSE h;
 
-	CHECK_CONDITION((rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
-
+    CHECK_CONDITION((rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
+    
+    // FIXME: should do proper cbor and cose error conversions
     cose = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 
-    return COSE_Init(cose, ptype, struct_type, CBOR_CONTEXT_COMMA perr);
+    h = COSE_Init(cose, ptype, struct_type, CBOR_CONTEXT_COMMA perr);
+    CHECK_CONDITION((h != NULL), COSE_ERR_CBOR)
+    
+    return h;
 
 errorReturn:
-    return false;
+    cn_cbor_free(cose);
+    return NULL;
 }
 
 

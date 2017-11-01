@@ -1,6 +1,3 @@
-#include "cose_int.h"
-#include "cose.h"
-
 #ifndef __COSE_CRYPTO_H__
 #define __COSE_CRYPTO_H__
 
@@ -82,3 +79,4 @@ bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pK
 void rand_bytes(byte * pb, size_t cb);
 
 #endif
+

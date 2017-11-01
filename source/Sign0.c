@@ -199,7 +199,7 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 }
 
 /** Validates a COSE based on the pKey.
-* @param hSign The whole decoded COSE (get by using COSE_Decode())
+* @param hSign The whole decoded COSE (get by using COSE_Decode() or COSE_Init())
 * @param pKey a verification key object containing information about the key.
 * @param perr Pointer to user provided COSE error object.
 *
@@ -240,26 +240,15 @@ bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCo
     byte pKey[1024];
     size_t keySize;
 
-    //CHECK_CONDITION(perr != NULL, COSE_ERR_INVALID_PARAMETER);
-    //perr->err = COSE_ERR_NONE;
-
-    status = GetECKeyFromCbor(pKeyCose, pKey, sizeof(pKey), &keySize, perr);
+    // Does NULL check for pKeyCose
+    status = GetECKeyFromCoseKeyObj(pKeyCose, pKey, sizeof(pKey), &keySize, perr);
 
     return (status) ? _COSE_Sign0_validate(hSign, pKey, keySize, perr) : status;
-
-errorReturn:
-    return false;
 }
 
-bool COSE_Sign0_validate_with_provided_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
+bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
 {
-    CHECK_CONDITION(perr != NULL, COSE_ERR_INVALID_PARAMETER);
-    perr->err = COSE_ERR_NONE;
-
     return _COSE_Sign0_validate(hSign, pKey, keySize, perr);
-
-errorReturn:
-    return false;
 }
 
 
