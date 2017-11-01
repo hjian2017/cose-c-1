@@ -8,8 +8,8 @@
 #include "cose_int.h"
 #include "crypto.h"
 
-bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_errback * perr);
-bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cose_errback * perr);
+bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor *pKey, cose_errback * perr);
+bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cose_verification_key_s *pKeyObj, cose_errback * perr);
 void _COSE_Sign0_Release(COSE_Sign0Message * p);
 
 COSE * Sign0Root = NULL;
@@ -198,29 +198,65 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 	return true;
 }
 
-bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pKey, cose_errback * perr)
+/** Validates a COSE based on the the pKey.
+*   If pKeyObj->mode = COSE_SIGN_VALIDATE_CBOR_KEY:
+*       The verification key resides within a cn_cbor object pointed to by pKeyObj->pKey
+*   If pKeyObj->mode = COSE_SIGN_VALIDATE_USER_KEY:
+*       The verification key in raw bytes is pointed to by pKeyObj->pKey
+*
+* @param hSign The whole decoded COSE (get by using COSE_Decode())
+* @param pKey a verification key object containing information about the key.
+* @param perr Pointer to user provided COSE error object.
+*
+* @return
+*       true in case of success or false otherwise.
+*/
+static bool _COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cose_verification_key_s *pKeyObj, cose_errback * perr)
 {
-	bool f;
-	COSE_Sign0Message * pSign;
-	const cn_cbor * cnContent;
-	const cn_cbor * cnProtected;
+    bool f;
+    COSE_Sign0Message * pSign;
+    const cn_cbor * cnContent;
+    const cn_cbor * cnProtected;
 
-	CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_HANDLE);
+    CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_HANDLE);
 
-	pSign = (COSE_Sign0Message *)hSign;
+    pSign = (COSE_Sign0Message *)hSign;
 
-	cnContent = _COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
-	CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+    cnContent = _COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
+    CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
-	CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
+    cnProtected = _COSE_arrayget_int(&pSign->m_message, INDEX_PROTECTED);
+    CHECK_CONDITION(cnProtected != NULL && cnProtected->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
 
-	f = _COSE_Signer0_validate(pSign, pKey,  perr);
+    f = _COSE_Signer0_validate(pSign, pKeyObj, perr);
 
-	return f;
+    return f;
 
 errorReturn:
-	return false;
+    return false;
+}
+
+
+bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pKey, cose_errback * perr)
+{
+    cose_verification_key_s verificationKey;
+
+    verificationKey.mode = COSE_SIGN_VALIDATE_CBOR_KEY;
+    verificationKey.pKey = (const byte*)pKey;
+    // verificationKey.keySize is irrelevant - it will be extracted from the pKey CBOR
+
+    return _COSE_Sign0_validate(hSign, &verificationKey, perr);
+}
+
+bool COSE_Sign0_validate_with_provided_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
+{
+    cose_verification_key_s verificationKey;
+
+    verificationKey.mode = COSE_SIGN_VALIDATE_USER_KEY;
+    verificationKey.pKey = pKey;
+    verificationKey.keySize = keySize;
+
+    return _COSE_Sign0_validate(hSign, &verificationKey, perr);
 }
 
 
@@ -378,7 +414,7 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	return f;
 }
 
-bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cose_errback * perr)
+bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cose_verification_key_s *pKeyObj, cose_errback * perr)
 {
 	byte * pbToSign = NULL;
 	int alg;
@@ -411,19 +447,19 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const cn_cbor * pKey, cos
     switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
-		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 256, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKeyObj, 256, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
-		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 384, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKeyObj, 384, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
-		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKey, 512, pbToSign, cbToSign, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSign->m_message, INDEX_SIGNATURE+1, pKeyObj, 512, pbToSign, cbToSign, perr)) goto errorReturn;
 		break;
 #endif
 

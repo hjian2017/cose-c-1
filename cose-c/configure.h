@@ -1,3 +1,8 @@
+
+#ifndef __COSE_CONFIGURE_H__
+#define __COSE_CONFIGURE_H__
+
+
 //
 //  Determine which cryptographic library we are goig to be usig
 //
@@ -137,3 +142,5 @@
 
 
 //#define USE_COUNTER_SIGNATURES
+
+#endif

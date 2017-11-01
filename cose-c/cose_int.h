@@ -3,6 +3,9 @@
 // These definitions are here because they aren't required for the public
 // interface, and they were quite confusing in cn-cbor.h
 
+#ifndef __COSE_INT_H__
+#define __COSE_INT_H__
+
 #ifdef USE_COUNTER_SIGNATURES
 struct _COSE_COUNTER_SIGN;
 typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
@@ -280,3 +283,5 @@ enum {
 
 
 #define COSE_CounterSign_object 1000
+
+#endif

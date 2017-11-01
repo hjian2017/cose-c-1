@@ -7,6 +7,7 @@
 #include <memory.h>
 #include <stdbool.h>
 
+#undef USE_OPEN_SSL
 #ifdef USE_OPEN_SSL
 
 #include <openssl/evp.h>
