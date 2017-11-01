@@ -119,87 +119,99 @@ void _COSE_Release(COSE * pobj)
 	if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot, context);
 }
 
+HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    cn_cbor * cbor = NULL;
+    cn_cbor * cborRoot = NULL;
+    cn_cbor_errback cbor_err;
+    HCOSE h;
 
+    cbor = cborRoot = coseObj;
+    CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
+
+    if (cbor->type == CN_CBOR_TAG) {
+        if (struct_type != 0) {
+            CHECK_CONDITION(struct_type == (COSE_object_type)cbor->v.sint, COSE_ERR_INVALID_PARAMETER);
+        } else struct_type = cbor->v.uint;
+
+        *ptype = struct_type;
+
+        cbor = cbor->first_child;
+    } else {
+        *ptype = struct_type;
+    }
+
+    CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
+
+    switch (*ptype) {
+        case COSE_enveloped_object:
+            h = (HCOSE)_COSE_Enveloped_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        case COSE_sign_object:
+            h = (HCOSE)_COSE_Sign_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        case COSE_sign0_object:
+            h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        case COSE_mac_object:
+            h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        case COSE_mac0_object:
+            h = (HCOSE)_COSE_Mac0_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        case COSE_encrypt_object:
+            h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+            if (h == NULL) {
+                goto errorReturn;
+            }
+            break;
+
+        default:
+            FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+    }
+
+    return h;
+
+errorReturn:
+    COSE_FREE(cbor, context);
+    return NULL;
+
+}
+// This decodes and calls COSE_Init
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	cn_cbor * cbor = NULL;
-	cn_cbor * cborRoot = NULL;
+	cn_cbor * cose = NULL;
 	cn_cbor_errback cbor_err;
 	HCOSE h;
 
 	CHECK_CONDITION((rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
 
-	cbor = cborRoot = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
-	CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
+    cose = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 
-	if (cbor->type == CN_CBOR_TAG) {
-		if (struct_type != 0) {
-                    CHECK_CONDITION(struct_type == (COSE_object_type) cbor->v.sint, COSE_ERR_INVALID_PARAMETER);
-		}
-		else struct_type = cbor->v.uint;
-
-		*ptype = struct_type;
-
-		cbor = cbor->first_child;
-	}
-	else {
-		*ptype = struct_type;
-	}
-
-	CHECK_CONDITION(cbor->type == CN_CBOR_ARRAY, COSE_ERR_INVALID_PARAMETER);
-
-	switch (*ptype) {
-	case COSE_enveloped_object:
-		h = (HCOSE)_COSE_Enveloped_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	case COSE_sign_object:
-		h = (HCOSE)_COSE_Sign_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	case COSE_sign0_object:
-		h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	case COSE_mac_object:
-		h = (HCOSE)_COSE_Mac_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	case COSE_mac0_object:
-		h = (HCOSE)_COSE_Mac0_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	case COSE_encrypt_object:
-		h = (HCOSE)_COSE_Encrypt_Init_From_Object(cbor, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
-		if (h == NULL) {
-			goto errorReturn;
-		}
-		break;
-
-	default:
-		FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
-	}
-
-	return h;
+    return COSE_Init(cose, ptype, struct_type, CBOR_CONTEXT_COMMA perr);
 
 errorReturn:
-	COSE_FREE(cbor, context);
-	return NULL;
+    return false;
 }
 
 

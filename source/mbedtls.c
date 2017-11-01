@@ -27,18 +27,26 @@
 #define COSE_Key_EC_X -2
 #define COSE_Key_EC_Y -3
 
-static bool GetECKey(const cn_cbor *cborKey, byte *ecKeyOut, size_t *ecKeySizeOut, int *groupSizeBytesOut, cose_errback *perr)
+// Must add parameter for ecKeyOut size and return an error
+bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr)
 {
     byte rgbKey[512 + 1];
     size_t rgbKeyBytes;
     const cn_cbor *p;
+    int groupSizeBytes;
 
-    p = cn_cbor_mapget_int(cborKey, COSE_Key_EC_Curve);
+    cose_errback error = { 0 };
+    if (perr == NULL) perr = &error;
+
+    // Assume success at first
+    perr->err = COSE_ERR_NONE;
+
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_Curve);
     DBA_ERR_RECOVERABLE_GOTO_IF((p == NULL), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int getting EC Curve");
 
     switch (p->v.sint) {
         case 1: // P-256
-            *groupSizeBytesOut = 256 / 8;
+            groupSizeBytes = 256 / 8;
             break;
         default:
             // Unsupported
@@ -47,31 +55,32 @@ static bool GetECKey(const cn_cbor *cborKey, byte *ecKeyOut, size_t *ecKeySizeOu
             return false; // failure
     }
 
-    p = cn_cbor_mapget_int(cborKey, COSE_Key_EC_X);
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_X);
     DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting X point");
-    DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid X point group size");
+    DBA_ERR_RECOVERABLE_GOTO_IF((p->length != groupSizeBytes), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid X point group size");
     memcpy(rgbKey + 1, p->v.str, p->length);
 
-    p = cn_cbor_mapget_int(cborKey, COSE_Key_EC_Y);
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_Y);
     DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting Y point");
 
     if (p->type == CN_CBOR_BYTES) {
         rgbKey[0] = 0x04; // Uncompressed
-        rgbKeyBytes = (*groupSizeBytesOut * 2) + 1;
-        DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid Y point group size");
+        rgbKeyBytes = (groupSizeBytes * 2) + 1;
+        DBA_ERR_RECOVERABLE_GOTO_IF((p->length != groupSizeBytes), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid Y point group size");
         memcpy(rgbKey + p->length + 1, p->v.str, p->length);
     } else if (p->type == CN_CBOR_TRUE) {
-        rgbKeyBytes = (*groupSizeBytesOut) + 1;
+        rgbKeyBytes = (groupSizeBytes) + 1;
         rgbKey[0] = 0x02 + (rgbKey[0] & 0x1); // Compressed
     } else if (p->type == CN_CBOR_FALSE) {
-        rgbKeyBytes = (*groupSizeBytesOut) + 1;
+        rgbKeyBytes = (groupSizeBytes) + 1;
         rgbKey[0] = 0x04; // Uncompressed
     } else {
         DBA_LOG_ERR("Invalid CBOR type");
-        perr->err =COSE_ERR_INVALID_PARAMETER;
+        perr->err = COSE_ERR_INVALID_PARAMETER;
         return false; // failure
     }
 
+    DBA_ERR_RECOVERABLE_GOTO_IF((rgbKeyBytes > ecKeyBufferSize), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Provided buffer of insufficient size");
 
 GetECKeyError:
     if (perr->err != COSE_ERR_NONE) {
@@ -81,20 +90,19 @@ GetECKeyError:
     // success
     memcpy(ecKeyOut, rgbKey, rgbKeyBytes);
     *ecKeySizeOut = rgbKeyBytes;
-
     return true;
-}
+} 
 
 bool ECDSA_Verify(
     COSE *pSigner,
     int index,
-    const cn_cbor *pKey,
+    const byte *pKey,
+    size_t keySize,
     int cbitDigest,
     const unsigned char *rgbToSign,
     size_t cbToSign,
     cose_errback *perr)
 {
-    bool success;
     palStatus_t palStatus;
     unsigned char rgbDigest[PAL_SHA256_SIZE];
     uint32_t rgbDigestSize = sizeof(rgbDigest);
@@ -106,9 +114,17 @@ bool ECDSA_Verify(
     mbedtls_mpi r, s;
     mbedtls_ecp_group grp;
 
-    byte rawECKey[512 + 1];
-    size_t rawECKeySize;
+    cose_errback error = { 0 };
+    if (perr == NULL) perr = &error;
+
+    //byte rawECKey[512 + 1];
+    //size_t rawECKeySize;
+
     int groupSizeBytes;
+
+    // groupSizeBytes always the size of the key / 2.
+    // keySize has an extra byte containing compression type, so the actual key size is keySize - 1
+    groupSizeBytes = ((keySize - 1) / 2);
 
     // FIXME: for demo purposes it is assumed that we're getting the key in DER format from the KCM,
     // when we will switch to a "proof of possession" we have to parse a CBOR object to extract the public key material.
@@ -130,9 +146,12 @@ bool ECDSA_Verify(
     palStatus = pal_sha256(rgbToSign, cbToSign, rgbDigest);
     DBA_ERR_RECOVERABLE_GOTO_IF((palStatus != PAL_SUCCESS), (perr->err = COSE_ERR_CRYPTO_FAIL), EndWithError, "Failed for pal_sha256 (paStatus = %" PRIu32 ")", palStatus);
 
+
     // Get the EC raw key
-    success = GetECKey(pKey, rawECKey, &rawECKeySize, &groupSizeBytes, perr);
+/*
+    success = GetECKey(pKeyObj, rawECKey, &rawECKeySize, &groupSizeBytes, perr);
     DBA_ERR_RECOVERABLE_GOTO_IF((!success), (perr->err = perr->err), EndWithError, "Failed for GetECKey");
+*/
 
     // Fetch the signature to check against and verify it is legit
 
@@ -142,7 +161,7 @@ bool ECDSA_Verify(
     DBA_ERR_RECOVERABLE_GOTO_IF(((signerSigLength / 2) != groupSizeBytes), (perr->err = COSE_ERR_INVALID_PARAMETER), EndWithError, "Signer invalid signature length");
 
     // Create mbedTLS EC key (reminder: we currently (for demo purposes) treats the key as a byte stream (not as CBOR entity)
-    mbedtlsStatus = mbedtls_ecp_point_read_binary(&grp, &ecKey, rawECKey, rawECKeySize);
+    mbedtlsStatus = mbedtls_ecp_point_read_binary(&grp, &ecKey, pKey, keySize);
     DBA_ERR_RECOVERABLE_GOTO_IF((mbedtlsStatus != 0), (perr->err = COSE_ERR_INTERNAL), EndWithError, "Failed for mbedtls_ecp_point_read_binary (mbedtlsStatus = %u)", mbedtlsStatus);
 
     mbedtlsStatus = mbedtls_mpi_read_binary(&r, signerSig->v.bytes, (signerSigLength / 2));

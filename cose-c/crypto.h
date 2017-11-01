@@ -1,3 +1,10 @@
+#include "cose_int.h"
+#include "cose.h"
+
+#ifndef __COSE_CRYPTO_H__
+#define __COSE_CRYPTO_H__
+
+
 /**
 * Perform an AES-CCM Decryption operation
 *
@@ -61,7 +68,7 @@ bool HKDF_AES_Expand(COSE * pcose, size_t cbitKey, const byte * pbPRK, size_t cb
 * @return						Did the function succeed?
 */
 bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
-bool ECDSA_Verify(COSE * pSigner, int index, const cn_cbor * pKey, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
+bool ECDSA_Verify(COSE * pSigner, int index, const byte *pKey, size_t keySize, int cbitsDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr);
 
 bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pKeyYou, byte ** ppbSecret, size_t * pcbSecret, CBOR_CONTEXT_COMMA cose_errback *perr);
 
@@ -73,3 +80,5 @@ bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pK
 * @return                  none
 */
 void rand_bytes(byte * pb, size_t cb);
+
+#endif

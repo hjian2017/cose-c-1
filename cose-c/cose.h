@@ -1,5 +1,13 @@
-#include <cn-cbor.h>
+#ifndef __COSE_H__
+#define __COSE_H__
+
+#include "cn-cbor.h"
 #include "configure.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef unsigned char byte;
 
 typedef struct _cose * HCOSE;
@@ -64,7 +72,7 @@ typedef enum {
 } COSE_object_type;
 
 //  Generic functions for the COSE library
-
+HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb);
 
@@ -314,9 +322,12 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbC
 bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
-bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign0_validate_with_provided_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
+bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCose, cose_errback * perr);
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyOutSize, size_t *ecKeySizeOut, cose_errback *perr);
 
 /*
  * Counter Signature Routines
@@ -335,4 +346,9 @@ extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_e
 extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
 extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 

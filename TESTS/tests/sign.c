@@ -286,7 +286,7 @@ int _ValidateSign0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEn
 	if (!IsAlgorithmSupported(alg)) fNoAlgSupport = true;
 
 	pFail = cn_cbor_mapget_string(pInput, "fail");
-	if (COSE_Sign0_validate(hSig, pkey, &cose_error)) {
+	if (COSE_Sign0_validate_with_cose_key(hSig, pkey, &cose_error)) {
 		if (fNoAlgSupport) {
 			fFail = true;
 		}
@@ -519,9 +519,9 @@ void Sign0_Corners()
 	CHECK_FAILURE(COSE_Sign0_Sign(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign0_Sign(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
-	CHECK_FAILURE(COSE_Sign0_validate(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_validate(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
-	CHECK_FAILURE(COSE_Sign0_validate(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
+	CHECK_FAILURE(COSE_Sign0_validate_with_cose_key(hSignNULL, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign0_validate_with_cose_key(hSignBad, cn, &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
+	CHECK_FAILURE(COSE_Sign0_validate_with_cose_key(hSign, NULL, &cose_error), COSE_ERR_INVALID_PARAMETER, CFails++);
 
 	CHECK_FAILURE(COSE_Sign0_SetExternal(hSignNULL, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);
 	CHECK_FAILURE(COSE_Sign0_SetExternal(hSignBad, rgb, sizeof(rgb), &cose_error), COSE_ERR_INVALID_HANDLE, CFails++);

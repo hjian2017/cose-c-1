@@ -313,22 +313,34 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	cn_cbor * cnSignature = _COSE_arrayget_int(&pSigner->m_message, INDEX_SIGNATURE);
 	CHECK_CONDITION((cnSignature != NULL) && (cnSignature->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
+
+    // FIXME: This algorithm is currently not in use. When we do use it we might want it to be done like _COSE_Sign0_validate
+
+    bool status = false;
+    byte pKey[1024];
+    size_t keySize;
+    int groupSize;
+
+    if (!GetECKeyFromCbor(pSigner->m_pkey, pKey, sizeof(pKey), &keySize, perr)) {
+        return false;
+    }
+
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
 	case COSE_Algorithm_ECDSA_SHA_256:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 256, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pKey, keySize, 256, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_384
 	case COSE_Algorithm_ECDSA_SHA_384:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 384, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pKey, keySize, 384, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
 #ifdef USE_ECDSA_SHA_512
 	case COSE_Algorithm_ECDSA_SHA_512:
-		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pSigner->m_pkey, 512, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
+		if (!ECDSA_Verify(&pSigner->m_message, INDEX_SIGNATURE, pKey, keySize, 512, pbToBeSigned, cbToBeSigned, perr)) goto errorReturn;
 		break;
 #endif
 
