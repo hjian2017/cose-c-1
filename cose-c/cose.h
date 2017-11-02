@@ -24,7 +24,7 @@ typedef enum cose_error {
 	/** No error has occurred */
 	COSE_ERR_NONE,
 	/** An invalid parameter was passed to a function */
-	COSE_ERR_INVALID_PARAMETER,
+    COSE_ERR_INVALID_PARAMETER,
 	COSE_ERR_INVALID_HANDLE,
 	/** Allocation failed */
 	COSE_ERR_OUT_OF_MEMORY,
@@ -68,7 +68,7 @@ typedef enum {
 } COSE_object_type;
 
 //  Generic functions for the COSE library
-
+HCOSE COSE_Init(cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb);
 
@@ -321,6 +321,8 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
 bool COSE_Sign0_validate(HCOSE_SIGN0 hSign, const cn_cbor * pkey, cose_errback * perr);
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, cose_errback * errp);
+
+bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyOutSize, size_t *ecKeySizeOut, int *groupSizeBytesOut, cose_errback *perr);
 
 /*
  * Counter Signature Routines

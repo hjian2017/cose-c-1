@@ -27,78 +27,70 @@
 #define COSE_Key_EC_X -2
 #define COSE_Key_EC_Y -3
 
-static bool GetECKey(const cose_verification_key_s *pKeyObj, byte *ecKeyOut, size_t *ecKeySizeOut, int *groupSizeBytesOut, cose_errback *perr)
+// Must add parameter for ecKeyOut size and return an error
+bool GetECKeyFromCbor(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, int *groupSizeBytesOut, cose_errback *perr)
 {
     byte rgbKey[512 + 1];
     size_t rgbKeyBytes;
     const cn_cbor *p;
 
-    // If supplied a CBOR in the format of a COSE_Key
-    if (pKeyObj->mode == COSE_SIGN_VALIDATE_CBOR_KEY) {
-        p = cn_cbor_mapget_int(pKeyObj->pKey, COSE_Key_EC_Curve);
-        DBA_ERR_RECOVERABLE_GOTO_IF((p == NULL), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int getting EC Curve");
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_Curve);
+    DBA_ERR_RECOVERABLE_GOTO_IF((p == NULL), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int getting EC Curve");
 
-        switch (p->v.sint) {
-            case 1: // P-256
-                *groupSizeBytesOut = 256 / 8;
-                break;
-            default:
-                // Unsupported
-                DBA_LOG_ERR("Unsupported EC group name size (only P-256 is supported)");
-                perr->err = COSE_ERR_INVALID_PARAMETER;
-                return false; // failure
-        }
-
-        p = cn_cbor_mapget_int(pKeyObj->pKey, COSE_Key_EC_X);
-        DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting X point");
-        DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid X point group size");
-        memcpy(rgbKey + 1, p->v.str, p->length);
-
-        p = cn_cbor_mapget_int(pKeyObj->pKey, COSE_Key_EC_Y);
-        DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting Y point");
-
-        if (p->type == CN_CBOR_BYTES) {
-            rgbKey[0] = 0x04; // Uncompressed
-            rgbKeyBytes = (*groupSizeBytesOut * 2) + 1;
-            DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid Y point group size");
-            memcpy(rgbKey + p->length + 1, p->v.str, p->length);
-        } else if (p->type == CN_CBOR_TRUE) {
-            rgbKeyBytes = (*groupSizeBytesOut) + 1;
-            rgbKey[0] = 0x02 + (rgbKey[0] & 0x1); // Compressed
-        } else if (p->type == CN_CBOR_FALSE) {
-            rgbKeyBytes = (*groupSizeBytesOut) + 1;
-            rgbKey[0] = 0x04; // Uncompressed
-        } else {
-            DBA_LOG_ERR("Invalid CBOR type");
+    switch (p->v.sint) {
+        case 1: // P-256
+            *groupSizeBytesOut = 256 / 8;
+            break;
+        default:
+            // Unsupported
+            DBA_LOG_ERR("Unsupported EC group name size (only P-256 is supported)");
             perr->err = COSE_ERR_INVALID_PARAMETER;
             return false; // failure
-        }
+    }
 
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_X);
+    DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting X point");
+    DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid X point group size");
+    memcpy(rgbKey + 1, p->v.str, p->length);
+
+    p = cn_cbor_mapget_int(coseObj, COSE_Key_EC_Y);
+    DBA_ERR_RECOVERABLE_GOTO_IF(((p == NULL) && (p->type != CN_CBOR_BYTES)), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Failed for cn_cbor_mapget_int geting Y point");
+
+    if (p->type == CN_CBOR_BYTES) {
+        rgbKey[0] = 0x04; // Uncompressed
+        rgbKeyBytes = (*groupSizeBytesOut * 2) + 1;
+        DBA_ERR_RECOVERABLE_GOTO_IF((p->length != *groupSizeBytesOut), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Invalid Y point group size");
+        memcpy(rgbKey + p->length + 1, p->v.str, p->length);
+    } else if (p->type == CN_CBOR_TRUE) {
+        rgbKeyBytes = (*groupSizeBytesOut) + 1;
+        rgbKey[0] = 0x02 + (rgbKey[0] & 0x1); // Compressed
+    } else if (p->type == CN_CBOR_FALSE) {
+        rgbKeyBytes = (*groupSizeBytesOut) + 1;
+        rgbKey[0] = 0x04; // Uncompressed
+    } else {
+        DBA_LOG_ERR("Invalid CBOR type");
+        perr->err = COSE_ERR_INVALID_PARAMETER;
+        return false; // failure
+    }
+
+    DBA_ERR_RECOVERABLE_GOTO_IF((rgbKeyBytes > ecKeyBufferSize), (perr->err = COSE_ERR_INVALID_PARAMETER), GetECKeyError, "Provided buffer of insufficient size");
 
 GetECKeyError:
-        if (perr->err != COSE_ERR_NONE) {
-            return false; // failure
-        }
-
-        // success
-        memcpy(ecKeyOut, rgbKey, rgbKeyBytes);
-        *ecKeySizeOut = rgbKeyBytes;
-        return true;
-    
-    } else { // If user supplied a buffer as the public key (pKey->mode == COSE_SIGN_VALIDATE_CBOR_KEY) 
-        // Only supports P-256
-        *groupSizeBytesOut = 256 / 8;
-
-        memcpy(ecKeyOut, pKeyObj->pKey, pKeyObj->keySize);
-        *ecKeySizeOut = pKeyObj->keySize;
-        return true;
+    if (perr->err != COSE_ERR_NONE) {
+        return false; // failure
     }
-}
+
+    // success
+    memcpy(ecKeyOut, rgbKey, rgbKeyBytes);
+    *ecKeySizeOut = rgbKeyBytes;
+    return true;
+} 
 
 bool ECDSA_Verify(
     COSE *pSigner,
     int index,
-    const cose_verification_key_s *pKeyObj,
+    const byte *pKey,
+    size_t keySize,
     int cbitDigest,
     const unsigned char *rgbToSign,
     size_t cbToSign,
@@ -142,8 +134,10 @@ bool ECDSA_Verify(
 
 
     // Get the EC raw key
+/*
     success = GetECKey(pKeyObj, rawECKey, &rawECKeySize, &groupSizeBytes, perr);
     DBA_ERR_RECOVERABLE_GOTO_IF((!success), (perr->err = perr->err), EndWithError, "Failed for GetECKey");
+*/
 
     // Fetch the signature to check against and verify it is legit
 
