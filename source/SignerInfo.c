@@ -227,7 +227,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	fRet = true;
 
 errorReturn:
-	if (pArray != NULL) COSE_FREE(pArray, context);
+	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
 	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
 	return fRet;
 }

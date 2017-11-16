@@ -119,7 +119,23 @@ void _COSE_Release(COSE * pobj)
     if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot, context);
 }
 
-HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+/**
+* Create an HCOSE. This function does all the COSE initializations.
+* The function allocates memory dynamically, and must be freed by COSE_<type>_Free() function. Depending on struct_type.
+*
+* @param[in]  coseObj       Pointer to a decoded CBOR object containing the COSE.
+* @param[out] pType         Pointer to the location where the COSE_object_type will be output to the caller.
+*                           Should be the same as the provided struct_type.
+* @param[in]  struct_type   Enum representing the type of COSE.
+* @param[in]  isOwner       If this is true - COSE_<type>_Free() will free coseObj. If false - coseObj must be freed by user who allocated coseObj.
+* @param[in]  CBOR_CONTEXT  Allocation context (only if USE_CBOR_CONTEXT is defined).
+* @param[out] cose_errback  Pointer to COSE error object. Can be NULL. 
+*
+* @return
+*       HCOSE handle which points to the specific COSE object based on the struct_type.
+*       NULL if error has occured.
+*/
+static HCOSE _COSE_Create_HCOSE(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, bool isOwner, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
     cn_cbor * cbor = NULL;
     cn_cbor * cborRoot = NULL;
@@ -159,6 +175,12 @@ HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_typ
             if (h == NULL) {
                 goto errorReturn;
             }
+
+            // By default _COSE_Sign0_Init_From_Object sets pSign0->m_message.m_ownMsg to 1
+            COSE_Sign0Message *pSign0 = (COSE_Sign0Message *)(h);
+            if (!isOwner) {
+                pSign0->m_message.m_ownMsg = 0;
+            }
             break;
 
         case COSE_mac_object:
@@ -192,6 +214,13 @@ errorReturn:
     return NULL;
 
 }
+
+HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    return _COSE_Create_HCOSE(coseObj, ptype, struct_type, false, CBOR_CONTEXT_COMMA perr);
+}
+
+
 // This decodes and calls COSE_Init
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
@@ -204,8 +233,8 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
     // FIXME: should do proper cbor and cose error conversions
     cose = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 
-    h = COSE_Init(cose, ptype, struct_type, CBOR_CONTEXT_COMMA perr);
-    CHECK_CONDITION((h != NULL), COSE_ERR_CBOR)
+    h = _COSE_Create_HCOSE(cose, ptype, struct_type, true, CBOR_CONTEXT_COMMA perr);
+    CHECK_CONDITION((h != NULL), COSE_ERR_CBOR);
 
     return h;
 

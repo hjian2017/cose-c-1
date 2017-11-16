@@ -328,13 +328,13 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	pbToSign = NULL;
 
 	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	if (pArray != NULL) COSE_FREE(pArray, context);
+	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
 	return true;
 
 errorReturn:
 	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
 	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	if (pArray != NULL) COSE_FREE(pArray, context);
+	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
 	return false;
 }
 
@@ -358,7 +358,7 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	errorReturn:
 		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2, context);
 		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2, context);
-		if (pArray != NULL) COSE_FREE(pArray, context);
+		if (pArray != NULL) CN_CBOR_FREE(pArray, context);
 		if (pbToSign != NULL) COSE_FREE(pbToSign, context);
 		return false;
 	}

@@ -72,7 +72,46 @@ typedef enum {
 } COSE_object_type;
 
 //  Generic functions for the COSE library
+
+/**
+* Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
+*
+* The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
+* Note: If a COSE is initialized using this function, coseObj provided will NOT be freed when calling COSE_<type>_Free(). caller must free it seperately.
+* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign0_object, since this is the only type currently in use.
+*        to support this functionality for other types, then inside the _COSE_Create_HCOSE() functions that COSE_Init() calls,
+*        we should update the correct owner flag in the COSE object of that type. 
+*
+* @param[in]  coseObj       Pointer to an allocated decoded CBOR object containing the COSE.
+* @param[out] pType         Pointer to the location where the COSE_object_type will be output to the caller.
+*                           Should be the same as the provided struct_type.
+* @param[in]  struct_type   Enum representing the type of COSE.
+* @param[in]  CBOR_CONTEXT  Allocation context (only if USE_CBOR_CONTEXT is defined).
+* @param[out] cose_errback  Pointer to COSE error object where error code will be stored. Can be NULL.
+*
+* @return
+*       HCOSE handle which points to the specific COSE object based on the struct_type.
+*       NULL if error has occurred.
+*/
 HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);
+
+/**
+* Create an HCOSE from an encoded buffer containing a COSE.
+*
+* The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
+*
+* @param[in]  rgbData       Pointer to a buffer containing the encoded COSE.
+* @param[in]  cbData        The size of rgbData buffer.
+* @param[out] pType         Pointer to the location where the COSE_object_type will be output to the caller.
+*                           Should be the same as the provided struct_type.
+* @param[in]  struct_type   Enum representing the type of COSE.
+* @param[in]  CBOR_CONTEXT  Allocation context (only if USE_CBOR_CONTEXT is defined).
+* @param[out] cose_errback  Pointer to COSE error object where error code will be stored. Can be NULL.
+*
+* @return
+*       HCOSE handle which points to the specific COSE object based on the struct_type.
+*       NULL if error has occurred.
+*/
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * type, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);  //  Decode the object
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb);
 
