@@ -21,7 +21,7 @@ bool IsValidSignerHandle(HCOSE_SIGNER h)
 }
 
 
-bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner)
+bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner CBOR_CONTEXT)
 {
 	//  Check ref counting
 	if (pSigner->m_message.m_refCount > 1) {
@@ -29,12 +29,12 @@ bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner)
 		return true;
 	}
 
-	_COSE_Release(&pSigner->m_message);
+	_COSE_Release(&pSigner->m_message CBOR_CONTEXT_PARAM);
 
 	return true;
 }
 
-bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
+bool COSE_Signer_Free(HCOSE_SIGNER hSigner CBOR_CONTEXT)
 {
 	COSE_SignerInfo * pSigner = (COSE_SignerInfo *)hSigner;
 	bool fRet = false;
@@ -46,11 +46,11 @@ bool COSE_Signer_Free(HCOSE_SIGNER hSigner)
 		return true;
 	}
 
-	_COSE_SignerInfo_Free(pSigner);
+	_COSE_SignerInfo_Free(pSigner CBOR_CONTEXT_PARAM);
 
 	_COSE_RemoveFromList(&SignerRoot, &pSigner->m_message);
 
-	COSE_FREE(pSigner, &pSigner->m_message.m_allocContext);
+	COSE_FREE(pSigner);
 
 	fRet = true;
 errorReturn:
@@ -67,8 +67,8 @@ HCOSE_SIGNER COSE_Signer_Init(CBOR_CONTEXT_COMMA cose_errback * perror)
 	}
 
 	if (!_COSE_SignerInfo_Init(COSE_INIT_FLAGS_NO_CBOR_TAG, pobj, COSE_recipient_object, CBOR_CONTEXT_PARAM_COMMA perror)) {
-		_COSE_SignerInfo_Free(pobj);
-		COSE_FREE(pobj, context);
+		_COSE_SignerInfo_Free(pobj CBOR_CONTEXT_PARAM);
+		COSE_FREE(pobj);
 		return NULL;
 	}
 
@@ -100,8 +100,8 @@ COSE_SignerInfo * _COSE_SignerInfo_Init_From_Object(cn_cbor * cbor, COSE_SignerI
 
 errorReturn:
 	if (pSigner != NULL) {
-		_COSE_SignerInfo_Free(pSigner);
-		if (pIn == NULL) COSE_FREE(pSigner, context);
+		_COSE_SignerInfo_Free(pSigner CBOR_CONTEXT_PARAM);
+		if (pIn == NULL) COSE_FREE(pSigner);
 	}
 	return NULL;
 }
@@ -159,9 +159,9 @@ bool BuildToBeSigned(byte ** ppbToSign, size_t * pcbToSign, const cn_cbor * pcbo
 	f = true;
 	
 errorReturn:
-	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
-	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+	if (cn != NULL) CN_CBOR_FREE(cn);
+	if (pArray != NULL) CN_CBOR_FREE(pArray);
+	if (pbToSign != NULL) COSE_FREE(pbToSign);
 	return f;
 
 }
@@ -196,7 +196,7 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 		alg = (int)cnAlgorithm->v.sint;
 	}
 
-	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, perr);
+	pcborProtectedSign = _COSE_encode_protected(&pSigner->m_message, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (pcborProtectedSign == NULL) goto errorReturn;
 
 	if (!BuildToBeSigned(&pbToSign, &cbToSign, pcborBody, pcborProtected, pcborProtectedSign, pSigner->m_message.m_pbExternal, pSigner->m_message.m_cbExternal, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
@@ -227,8 +227,8 @@ bool _COSE_Signer_sign(COSE_SignerInfo * pSigner, const cn_cbor * pcborBody, con
 	fRet = true;
 
 errorReturn:
-	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
-	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+	if (pArray != NULL) CN_CBOR_FREE(pArray);
+	if (pbToSign != NULL) COSE_FREE(pbToSign);
 	return fRet;
 }
 
@@ -350,7 +350,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	fRet = true;
 
 errorReturn:
-	if (pbToBeSigned != NULL) COSE_FREE(pbToBeSigned, context);
+	if (pbToBeSigned != NULL) COSE_FREE(pbToBeSigned);
 
 	return fRet;
 }
@@ -365,14 +365,14 @@ cn_cbor * COSE_Signer_map_get_int(HCOSE_SIGNER h, int key, int flags, cose_errba
 	return _COSE_map_get_int((COSE *)h, key, flags, perr);
 }
 
-bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, cose_errback * perr)
+bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	bool fRet = false;
 
 	CHECK_CONDITION(IsValidSignerHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, perr);
+	return _COSE_map_put(&((COSE_SignerInfo *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return fRet;

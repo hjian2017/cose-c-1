@@ -7,47 +7,38 @@
 #define _countof(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
-#ifdef USE_CBOR_CONTEXT
-cn_cbor_context * allocator;
-#define CBOR_CONTEXT_PARAM , allocator
-#define CBOR_CONTEXT_PARAM_COMMA allocator,
-#else
-#define CBOR_CONTEXT_PARAM
-#define CBOR_CONTEXT_PARAM_COMMA
-#endif
-
 //  encrypt.c
 
-int ValidateEnveloped(const cn_cbor * pControl);
+int ValidateEnveloped(const cn_cbor * pControl CBOR_CONTEXT);
 int EncryptMessage();
-int BuildEnvelopedMessage(const cn_cbor * pControl);
-int ValidateEncrypt(const cn_cbor * pControl);
-int BuildEncryptMessage(const cn_cbor * pControl);
-void Enveloped_Corners();
-void Encrypt_Corners();
-void Recipient_Corners();
+int BuildEnvelopedMessage(const cn_cbor * pControl CBOR_CONTEXT);
+int ValidateEncrypt(const cn_cbor * pControl CBOR_CONTEXT);
+int BuildEncryptMessage(const cn_cbor * pControl CBOR_CONTEXT);
+void Enveloped_Corners(CBOR_CONTEXT_NO_COMMA);
+void Encrypt_Corners(CBOR_CONTEXT_NO_COMMA);
+void Recipient_Corners(CBOR_CONTEXT_NO_COMMA);
 
 
 //  sign.c
 
-int ValidateSigned(const cn_cbor * pControl);
-int SignMessage();
-int BuildSignedMessage(const cn_cbor * pControl);
-int ValidateSign0(const cn_cbor * pControl);
-int BuildSign0Message(const cn_cbor * pControl);
-void Sign_Corners();
-void Sign0_Corners();
+int ValidateSigned(const cn_cbor * pControl CBOR_CONTEXT);
+int SignMessage(CBOR_CONTEXT_NO_COMMA);
+int BuildSignedMessage(const cn_cbor * pControl CBOR_CONTEXT);
+int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT);
+int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT);
+void Sign_Corners(CBOR_CONTEXT_NO_COMMA);
+void Sign0_Corners(CBOR_CONTEXT_NO_COMMA);
 
 
 // mac_testc
 
-int ValidateMAC(const cn_cbor * pControl);
-int MacMessage();
-int BuildMacMessage(const cn_cbor * pControl);
-int ValidateMac0(const cn_cbor * pControl);
-int BuildMac0Message(const cn_cbor * pControl);
-void MAC_Corners();
-void MAC0_Corners();
+int ValidateMAC(const cn_cbor * pControl CBOR_CONTEXT);
+int MacMessage(CBOR_CONTEXT_NO_COMMA);
+int BuildMacMessage(const cn_cbor * pControl CBOR_CONTEXT);
+int ValidateMac0(const cn_cbor * pControl CBOR_CONTEXT);
+int BuildMac0Message(const cn_cbor * pControl CBOR_CONTEXT);
+void MAC_Corners(CBOR_CONTEXT_NO_COMMA);
+void MAC0_Corners(CBOR_CONTEXT_NO_COMMA);
 
 #ifdef USE_CBOR_CONTEXT
 //  context.c

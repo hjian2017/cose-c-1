@@ -10,7 +10,7 @@
 
 bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor *pKey, cose_errback * perr);
 bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
-void _COSE_Sign0_Release(COSE_Sign0Message * p);
+void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT);
 
 COSE * Sign0Root = NULL;
 
@@ -47,8 +47,8 @@ HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errba
 	}
 
 	if (!_COSE_Init(flags,&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_Sign0_Release(pobj);
-		COSE_FREE(pobj, context);
+		_COSE_Sign0_Release(pobj CBOR_CONTEXT_PARAM);
+		COSE_FREE(pobj);
 		return NULL;
 	}
 
@@ -80,13 +80,13 @@ HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn
 
 errorReturn:
 	if (pobj != NULL) {
-		_COSE_Sign0_Release(pobj);
-		if (pIn == NULL) COSE_FREE(pobj, context);
+		_COSE_Sign0_Release(pobj CBOR_CONTEXT_PARAM);
+		if (pIn == NULL) COSE_FREE(pobj);
 	}
 	return NULL;
 }
 
-bool COSE_Sign0_Free(HCOSE_SIGN0 h)
+bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
 {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context context;
@@ -107,16 +107,16 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 h)
 	context = pMessage->m_message.m_allocContext;
 #endif
 
-	_COSE_Sign0_Release(pMessage);
+	_COSE_Sign0_Release(pMessage CBOR_CONTEXT_PARAM);
 
-	COSE_FREE(pMessage, &context);
+	COSE_FREE(pMessage);
 
 	return true;
 }
 
-void _COSE_Sign0_Release(COSE_Sign0Message * p)
+void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT)
 {
-	_COSE_Release(&p->m_message);
+	_COSE_Release(&p->m_message CBOR_CONTEXT_PARAM);
 }
 
 bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errback * perr)
@@ -144,7 +144,7 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errb
 	fRet = true;
 
 errorReturn:
-	if (p != NULL) CN_CBOR_FREE(p, context);
+	if (p != NULL) CN_CBOR_FREE(p);
 	return fRet;
 }
 
@@ -190,7 +190,7 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 	//	context = &pMessage->m_message.m_allocContext;
 #endif
 
-	pcborProtected = _COSE_encode_protected(&pMessage->m_message, perr);
+	pcborProtected = _COSE_encode_protected(&pMessage->m_message, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (pcborProtected == NULL) goto errorReturn;
 
 	if (!_COSE_Signer0_sign(pMessage, pKey, perr)) goto errorReturn;
@@ -262,12 +262,12 @@ cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback
 	return _COSE_map_get_int(&((COSE_Sign0Message *)h)->m_message, key, flags, perror);
 }
 
-bool COSE_Sign0_map_put_int(HCOSE_SIGN0 h, int key, cn_cbor * value, int flags, cose_errback * perr)
+bool COSE_Sign0_map_put_int(HCOSE_SIGN0 h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_Sign0Message *)h)->m_message, key, value, flags, perr);
+	return _COSE_map_put(&((COSE_Sign0Message *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return false;
@@ -327,14 +327,14 @@ static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size
 	*pcbToSign = cbToSign;
 	pbToSign = NULL;
 
-	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
+	if (cn != NULL) CN_CBOR_FREE(cn);
+	if (pArray != NULL) CN_CBOR_FREE(pArray);
 	return true;
 
 errorReturn:
-	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
-	if (cn != NULL) CN_CBOR_FREE(cn, context);
-	if (pArray != NULL) CN_CBOR_FREE(pArray, context);
+	if (pbToSign != NULL) COSE_FREE(pbToSign);
+	if (cn != NULL) CN_CBOR_FREE(cn);
+	if (pArray != NULL) CN_CBOR_FREE(pArray);
 	return false;
 }
 
@@ -356,10 +356,10 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	if (pArray == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
-		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2, context);
-		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2, context);
-		if (pArray != NULL) CN_CBOR_FREE(pArray, context);
-		if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+		if (pcborBody2 != NULL) CN_CBOR_FREE(pcborBody2);
+		if (pcborProtected2 != NULL) CN_CBOR_FREE(pcborProtected2);
+		if (pArray != NULL) CN_CBOR_FREE(pArray);
+		if (pbToSign != NULL) COSE_FREE(pbToSign);
 		return false;
 	}
 
@@ -400,8 +400,8 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 		FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
 	}
 
-	COSE_FREE(pbToSign, context);
-	CN_CBOR_FREE(pArray, context);
+	COSE_FREE(pbToSign);
+	CN_CBOR_FREE(pArray);
 
 	return f;
 }
@@ -463,7 +463,7 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t 
 	fRet = true;
 
 errorReturn:
-	if (pbToSign != NULL) COSE_FREE(pbToSign, context);
+	if (pbToSign != NULL) COSE_FREE(pbToSign);
 
 	return fRet;
 }

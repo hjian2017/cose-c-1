@@ -22,6 +22,7 @@
 
 #include "mbed-trace/mbed_trace.h"
 #include "mbed-trace-helper.h"
+#include "cn-cbor.h"
 
 
 #define TRACE_GROUP     "cose"  // Maximum 4 characters
@@ -42,6 +43,9 @@ static void run_cose_component_tests_task(pal_args_t *args)
     uint8_t activated_level = 0;
     palStatus_t pal_status;
     bool is_mutex_used = false;
+#ifdef USE_CBOR_CONTEXT
+    cn_cbor_context *cbor_ctx;
+#endif
 
     int myargc = args->argc + 2;
     const char **myargv = (const char **)calloc(myargc, sizeof(char *));
@@ -74,9 +78,21 @@ static void run_cose_component_tests_task(pal_args_t *args)
         pal_osDelay(500);
     }
     
+#ifdef USE_CBOR_CONTEXT
+    cbor_ctx = cn_cbor_init_context(40);
+    if (cbor_ctx == NULL) {
+        goto cleanup;
+    }
+#endif
+
     tr_cmdline("----< Test - Start >----\n");
     rc = UnityMain(myargc, myargv, RunAllCoseTests);
     tr_cmdline("----< Test - End >----\n");
+
+#if defined(USE_CBOR_CONTEXT)
+    cn_cbor_context_print_stats();
+    cn_cbor_free_context(cbor_ctx);
+#endif
 
     if (rc > 0) {
         tr_error("cose_component_tests: Test failed.\n");

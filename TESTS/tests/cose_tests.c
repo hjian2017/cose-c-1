@@ -16,8 +16,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <cose.h>
-#include <cn-cbor.h>
+#include "cose.h"
+#include "cn-cbor.h"
 #include <assert.h>
 #include "json.h"
 #include "cose_tests.h"
@@ -381,31 +381,31 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			break;
 
 		case Attributes_MAC0_protected:
-			f = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Mac0_map_put_int((HCOSE_MAC0)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Recipient_protected:
-			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Recipient_map_put_int((HCOSE_RECIPIENT)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Enveloped_protected:
-			f = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Enveloped_map_put_int((HCOSE_ENVELOPED)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Encrypt_protected:
-			f = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Encrypt_map_put_int((HCOSE_ENCRYPT)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Sign_protected:
-			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Sign_map_put_int((HCOSE_SIGN)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Signer_protected:
-			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		case Attributes_Sign0_protected:
-			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, NULL);
+			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
 		}
@@ -623,32 +623,32 @@ void RunAlgTest(char *cbor_input_json_string)
     }
 
     if (cn_cbor_mapget_string(pInput, "mac") != NULL) {
-        if (ValidateMAC(pControl)) {
+        if (ValidateMAC(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildMacMessage(pControl);
         }
     } else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
-        if (ValidateMac0(pControl)) {
+        if (ValidateMac0(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildMac0Message(pControl);
         }
     } else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
-        if (ValidateEnveloped(pControl)) {
+        if (ValidateEnveloped(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildEnvelopedMessage(pControl);
         }
     } else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
-        if (ValidateSigned(pControl)) {
+        if (ValidateSigned(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSignedMessage(pControl);
         }
     } else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-        if (ValidateSign0(pControl)) {
+        if (ValidateSign0(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSign0Message(pControl);
         }
     } else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-        if (ValidateEncrypt(pControl)) {
+        if (ValidateEncrypt(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildEncryptMessage(pControl);
         }

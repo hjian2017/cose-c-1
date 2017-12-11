@@ -5,7 +5,6 @@
 #include <string.h>
 #include <cose.h>
 #include <cn-cbor.h>
-
 #include "json.h"
 #include "cose_tests.h"
 #include "context.h"
@@ -15,7 +14,7 @@
 #endif
 
 
-int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
+int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
@@ -74,7 +73,7 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 		cn_cbor * cnStatic = cn_cbor_mapget_string(pRecipients, "sender_key");
 		if (cnStatic != NULL) {
 			if (COSE_Recipient_map_get_int(hRecip, COSE_Header_ECDH_SPK, COSE_BOTH, NULL) == 0) {
-				COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, NULL);
+				COSE_Recipient_map_put_int(hRecip, COSE_Header_ECDH_SPK, BuildKey(cnStatic, true), COSE_DONT_SEND, CBOR_CONTEXT_PARAM_COMMA NULL);
 			}
 		}
 
@@ -99,10 +98,10 @@ int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnco
 			else if ((pFail == NULL) || (pFail->type == CN_CBOR_FALSE)) fFail = true;
 		}
 
-		COSE_Recipient_Free(hRecip);
+		COSE_Recipient_Free(hRecip CBOR_CONTEXT_PARAM);
 	}
 
-	COSE_Mac_Free(hMAC);
+	COSE_Mac_Free(hMAC CBOR_CONTEXT_PARAM);
 
 	if (fFailBody) {
 		if (!fFail) fFail = true;
@@ -117,15 +116,15 @@ failTest:
 	return 0;
 }
 
-int ValidateMAC(const cn_cbor * pControl)
+int ValidateMAC(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
-	return _ValidateMAC(pControl, pbEncoded, cbEncoded);
+	return _ValidateMAC(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
 
-int BuildMacMessage(const cn_cbor * pControl)
+int BuildMacMessage(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	int iRecipient;
 
@@ -166,12 +165,12 @@ int BuildMacMessage(const cn_cbor * pControl)
 		cn_cbor * pSenderKey = cn_cbor_mapget_string(pRecipients, "sender_key");
 		if (pSenderKey != NULL) {
 			cn_cbor * pSendKey = BuildKey(pSenderKey, false);
-			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, NULL)) goto returnError;
+			if (!COSE_Recipient_SetSenderKey(hRecip, pSendKey, 2, CBOR_CONTEXT_PARAM_COMMA NULL)) goto returnError;
 		}
 
-		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, NULL)) goto returnError;
+		if (!COSE_Mac_AddRecipient(hMacObj, hRecip, CBOR_CONTEXT_PARAM_COMMA NULL)) goto returnError;
 
-		COSE_Recipient_Free(hRecip);
+		COSE_Recipient_Free(hRecip CBOR_CONTEXT_PARAM);
 	}
 
 	if (!COSE_Mac_encrypt(hMacObj, NULL)) goto returnError;
@@ -180,9 +179,9 @@ int BuildMacMessage(const cn_cbor * pControl)
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
 
-	COSE_Mac_Free(hMacObj);
+	COSE_Mac_Free(hMacObj CBOR_CONTEXT_PARAM);
 
-	int f = _ValidateMAC(pControl, rgb, cb);
+	int f = _ValidateMAC(pControl, rgb, cb CBOR_CONTEXT_PARAM);
 
 	free(rgb);
 	return f;
@@ -192,7 +191,7 @@ returnError:
 	return 1;
 }
 
-int MacMessage()
+int MacMessage(CBOR_CONTEXT_NO_COMMA)
 {
 	HCOSE_MAC hEncObj = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	char * sz = "This is the content to be used";
@@ -209,7 +208,7 @@ int MacMessage()
 
 	HCOSE_RECIPIENT hRecip = COSE_Recipient_from_shared_secret(rgbSecret, sizeof(rgbSecret), rgbKid, cbKid, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecip == NULL) goto errorReturn;
-	if (!COSE_Mac_AddRecipient(hEncObj, hRecip, NULL)) goto errorReturn;
+	if (!COSE_Mac_AddRecipient(hEncObj, hRecip, CBOR_CONTEXT_PARAM_COMMA NULL)) goto errorReturn;
 
 	if (!COSE_Mac_encrypt(hEncObj, NULL)) goto errorReturn;
 
@@ -221,7 +220,7 @@ int MacMessage()
 	cb = COSE_Encode((HCOSE)hEncObj, rgb, 0, cb);
 	if (cb == 0) goto errorReturn;
 
-	COSE_Mac_Free(hEncObj);
+	COSE_Mac_Free(hEncObj CBOR_CONTEXT_PARAM);
 
 	FILE * fp = fopen("test.mac.cbor", "wb");
 	fwrite(rgb, cb, 1, fp);
@@ -251,17 +250,17 @@ int MacMessage()
 		hRecip2 = COSE_Mac_GetRecipient(hEncObj, iRecipient, NULL);
 		if (hRecip2 == NULL) break;
 
-		if (!COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL, 0, NULL)) goto errorReturn;
+		if (!COSE_Recipient_SetKey_secret(hRecip2, rgbSecret, sizeof(rgbSecret), NULL, 0, CBOR_CONTEXT_PARAM_COMMA NULL)) goto errorReturn;
 
 		if (!COSE_Mac_validate(hEncObj, hRecip2, NULL)) goto errorReturn;
 
 		iRecipient += 1;
 
-		COSE_Recipient_Free(hRecip2);
+		COSE_Recipient_Free(hRecip2 CBOR_CONTEXT_PARAM);
 
 	} while (true);
 
-	COSE_Mac_Free(hEncObj);
+	COSE_Mac_Free(hEncObj CBOR_CONTEXT_PARAM);
 
 	return 1;
 
@@ -271,7 +270,7 @@ errorReturn:
 }
 
 
-int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded)
+int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 	const cn_cbor * pFail;
@@ -331,7 +330,7 @@ int _ValidateMac0(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEnc
 
 
 
-	COSE_Mac0_Free(hMAC);
+	COSE_Mac0_Free(hMAC CBOR_CONTEXT_PARAM);
 
 	if (fFailBody) {
 		if (!fFail) fFail = true;
@@ -346,15 +345,15 @@ errorReturn:
 	return (fFail || fUnsuportedAlg) ? 0 : 1;
 }
 
-int ValidateMac0(const cn_cbor * pControl)
+int ValidateMac0(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	int cbEncoded;
 	byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
-	return _ValidateMac0(pControl, pbEncoded, cbEncoded);
+	return _ValidateMac0(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
 
-int BuildMac0Message(const cn_cbor * pControl)
+int BuildMac0Message(const cn_cbor * pControl CBOR_CONTEXT)
 {
 
 	//
@@ -386,15 +385,15 @@ int BuildMac0Message(const cn_cbor * pControl)
 
 		cn_cbor * k = cn_cbor_mapget_int(pkey, -1);
 
-	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, NULL)) goto returnError;
+	if (!COSE_Mac0_encrypt(hMacObj, k->v.bytes, k->length, CBOR_CONTEXT_PARAM_COMMA NULL)) goto returnError;
 
 	size_t cb = COSE_Encode((HCOSE)hMacObj, NULL, 0, 0) + 1;
 	byte * rgb = (byte *)malloc(cb);
 	cb = COSE_Encode((HCOSE)hMacObj, rgb, 0, cb);
 
-	COSE_Mac0_Free(hMacObj);
+	COSE_Mac0_Free(hMacObj CBOR_CONTEXT_PARAM);
 
-	int f = _ValidateMac0(pControl, rgb, cb);
+	int f = _ValidateMac0(pControl, rgb, cb CBOR_CONTEXT_PARAM);
 
 	free(rgb);
 	return f;
@@ -405,7 +404,7 @@ returnError:
 }
 
 
-void MAC_Corners()
+void MAC_Corners(CBOR_CONTEXT_NO_COMMA)
 {
     HCOSE_MAC hMAC;
     HCOSE_ENCRYPT hEncrypt = NULL;
@@ -427,10 +426,10 @@ void MAC_Corners()
 	if (COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL)) CFails++;
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
-	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
 	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
-	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
+	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt CBOR_CONTEXT_PARAM)) CFails++;
 
     hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
@@ -439,10 +438,10 @@ void MAC_Corners()
 	if (COSE_Mac_map_put_int((HCOSE_MAC)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
 	if (COSE_Mac_encrypt((HCOSE_MAC)hEncrypt, NULL)) CFails++;
 	if (COSE_Mac_validate((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
-	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, NULL)) CFails++;
+	if (COSE_Mac_AddRecipient((HCOSE_MAC)hEncrypt, (HCOSE_RECIPIENT)hMAC, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	if (COSE_Mac_GetRecipient((HCOSE_MAC)hEncrypt, 0, NULL)) CFails++;
 	if (COSE_Mac_SetExternal((HCOSE_MAC)hEncrypt, rgb, 0, NULL)) CFails++;
-	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt)) CFails++;
+	if (COSE_Mac_Free((HCOSE_MAC)hEncrypt CBOR_CONTEXT_PARAM)) CFails++;
 
     //
 	//  Unsupported algorithm
@@ -453,10 +452,10 @@ void MAC_Corners()
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
 	hRecipient = COSE_Recipient_from_shared_secret(rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecipient == NULL) CFails++;
-	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, NULL)) CFails++;
+	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	CHECK_FAILURE(COSE_Mac_encrypt(hMAC, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	COSE_Mac_Free(hMAC);
-	COSE_Recipient_Free(hRecipient);
+	COSE_Mac_Free(hMAC CBOR_CONTEXT_PARAM);
+	COSE_Recipient_Free(hRecipient CBOR_CONTEXT_PARAM);
 
 	hMAC = COSE_Mac_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) CFails++;
@@ -464,17 +463,17 @@ void MAC_Corners()
 	if (!COSE_Mac_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
 	hRecipient = COSE_Recipient_from_shared_secret(rgb, sizeof(rgb), rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hRecipient == NULL) CFails++;
-	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, NULL)) CFails++;
+	if (!COSE_Mac_AddRecipient(hMAC, hRecipient, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	CHECK_FAILURE(COSE_Mac_encrypt(hMAC, &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	COSE_Recipient_Free(hRecipient);
-	COSE_Mac_Free(hMAC);
+	COSE_Recipient_Free(hRecipient CBOR_CONTEXT_PARAM);
+	COSE_Mac_Free(hMAC CBOR_CONTEXT_PARAM);
 
 	if (COSE_Mac_GetRecipient(hMAC, 9, NULL)) CFails++;
 
     return;
 }
 
-void MAC0_Corners()
+void MAC0_Corners(CBOR_CONTEXT_NO_COMMA)
 {
 	HCOSE_ENCRYPT hEncrypt = NULL;
 	HCOSE_MAC0 hMAC;
@@ -490,22 +489,22 @@ void MAC0_Corners()
 
 	if (COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
-	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
-	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
+	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	if (COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_SetExternal((HCOSE_MAC0)hEncrypt, rgb, 0, NULL)) CFails++;
-	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt)) CFails++;
+	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt CBOR_CONTEXT_PARAM)) CFails++;
 
 	hEncrypt = COSE_Encrypt_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 
 	if (COSE_Mac0_SetContent((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_map_get_int((HCOSE_MAC0)hEncrypt, 1, COSE_BOTH, NULL)) CFails++;
-	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, NULL)) CFails++;
-	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
+	if (COSE_Mac0_map_put_int((HCOSE_MAC0)hEncrypt, 1, cn, COSE_PROTECT_ONLY, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
+	if (COSE_Mac0_encrypt((HCOSE_MAC0)hEncrypt, rgb, 10, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
 	if (COSE_Mac0_validate((HCOSE_MAC0)hEncrypt, rgb, 10, NULL)) CFails++;
 	if (COSE_Mac0_SetExternal((HCOSE_MAC0)hEncrypt, rgb, 0, NULL)) CFails++;
 
-	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt)) CFails++;
+	if (COSE_Mac0_Free((HCOSE_MAC0)hEncrypt CBOR_CONTEXT_PARAM)) CFails++;
 
 	//
 	//  Unsupported algorithm
@@ -513,16 +512,16 @@ void MAC0_Corners()
 	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) CFails++;
 	if (!COSE_Mac0_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
-	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	COSE_Mac0_Free(hMAC);
+	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_int_create(-99, CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
+	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Mac0_Free(hMAC CBOR_CONTEXT_PARAM);
 
 	hMAC = COSE_Mac0_Init(0, CBOR_CONTEXT_PARAM_COMMA NULL);
 	if (hMAC == NULL) CFails++;
 	if (!COSE_Mac0_SetContent(hMAC, (byte *) "Message", 7, NULL)) CFails++;
-	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, NULL)) CFails++;
-	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
-	COSE_Mac0_Free(hMAC);
+	if (!COSE_Mac0_map_put_int(hMAC, COSE_Header_Algorithm, cn_cbor_string_create("hmac", CBOR_CONTEXT_PARAM_COMMA NULL), COSE_PROTECT_ONLY, CBOR_CONTEXT_PARAM_COMMA NULL)) CFails++;
+	CHECK_FAILURE(COSE_Mac0_encrypt(hMAC, rgb, sizeof(rgb), CBOR_CONTEXT_PARAM_COMMA &cose_error), COSE_ERR_UNKNOWN_ALGORITHM, CFails++);
+	COSE_Mac0_Free(hMAC CBOR_CONTEXT_PARAM);
 
 	return;
 }

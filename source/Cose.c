@@ -5,6 +5,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+#include "cn-cbor.h"
+
 bool IsValidCOSEHandle(HCOSE h)
 {
     COSE_Encrypt * p = (COSE_Encrypt *)h;
@@ -18,7 +20,7 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
     cn_cbor_errback errState;;
 
 #ifdef USE_CBOR_CONTEXT
-    if (context != NULL) pobj->m_allocContext = *context;
+    //if (cbor_context != NULL) pobj->m_allocContext = *cbor_context;
 #endif
 
     CHECK_CONDITION((flags & ~(COSE_INIT_FLAGS_DETACHED_CONTENT | COSE_INIT_FLAGS_NO_CBOR_TAG)) == 0, COSE_ERR_INVALID_PARAMETER);
@@ -65,7 +67,7 @@ bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose
     cn_cbor_errback cbor_error;
 
 #ifdef USE_CBOR_CONTEXT
-    if (context != NULL) pobj->m_allocContext = *context;
+    //if (cbor_context != NULL) pobj->m_allocContext = *cbor_context;
 #endif
     pobj->m_cborRoot = pcbor;
     pobj->m_cbor = pcbor;
@@ -107,16 +109,16 @@ errorReturn:
     return false;
 }
 
-void _COSE_Release(COSE * pobj)
+void _COSE_Release(COSE * pobj CBOR_CONTEXT)
 {
 #ifdef USE_CBOR_CONTEXT
-    cn_cbor_context * context = &pobj->m_allocContext;
+    //cbor_context *cbor_context = &pobj->m_allocContext;
 #endif
 
-    if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap, context);
-    if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap, context);
-    if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap, context);
-    if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot, context);
+    if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap);
+    if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap);
+    if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap);
+    if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot);
 }
 
 /**
@@ -128,12 +130,12 @@ void _COSE_Release(COSE * pobj)
 *                           Should be the same as the provided struct_type.
 * @param[in]  struct_type   Enum representing the type of COSE.
 * @param[in]  isOwner       If this is true - COSE_<type>_Free() will free coseObj. If false - coseObj must be freed by user who allocated coseObj.
-* @param[in]  CBOR_CONTEXT  Allocation context (only if USE_CBOR_CONTEXT is defined).
+* @param[in]  CBOR_CONTEXT  CBOR allocation context (only if USE_CBOR_CONTEXT is defined).
 * @param[out] cose_errback  Pointer to COSE error object. Can be NULL. 
 *
 * @return
 *       HCOSE handle which points to the specific COSE object based on the struct_type.
-*       NULL if error has occured.
+*       NULL if error has occurred.
 */
 static HCOSE _COSE_Create_HCOSE(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, bool isOwner, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
@@ -217,7 +219,7 @@ errorReturn:
 
 HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-    return _COSE_Create_HCOSE(coseObj, ptype, struct_type, false, CBOR_CONTEXT_COMMA perr);
+    return _COSE_Create_HCOSE(coseObj, ptype, struct_type, false CBOR_CONTEXT_PARAM, perr);
 }
 
 
@@ -233,13 +235,13 @@ HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_
     // FIXME: should do proper cbor and cose error conversions
     cose = cn_cbor_decode(rgbData, cbData, CBOR_CONTEXT_PARAM_COMMA &cbor_err);
 
-    h = _COSE_Create_HCOSE(cose, ptype, struct_type, true, CBOR_CONTEXT_COMMA perr);
+    h = _COSE_Create_HCOSE(cose, ptype, struct_type, true, CBOR_CONTEXT_PARAM_COMMA perr);
     CHECK_CONDITION((h != NULL), COSE_ERR_CBOR);
 
     return h;
 
 errorReturn:
-    cn_cbor_free(cose);
+    cn_cbor_free(cose CBOR_CONTEXT_PARAM);
     return NULL;
 }
 
@@ -325,11 +327,8 @@ cn_cbor * _COSE_map_get_str(COSE * pcose, const char * key, int flags, cose_errb
     return p;
 }
 
-bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, cose_errback * perr)
+bool _COSE_map_put(COSE * pCose, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-#ifdef USE_CBOR_CONTEXT
-    cn_cbor_context * context = &pCose->m_allocContext;
-#endif
     cn_cbor_errback error;
     bool f = false;
     CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
@@ -362,14 +361,11 @@ errorReturn:
     return f;
 }
 
-cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
+cn_cbor * _COSE_encode_protected(COSE * pMessage, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
     cn_cbor * pProtected;
     int cbProtected;
     byte * pbProtected = NULL;
-#ifdef USE_CBOR_CONTEXT
-    cn_cbor_context * context = &pMessage->m_allocContext;
-#endif // USE_CBOR_CONTEXT
     cn_cbor_errback cbor_error;
     int bytesWritten = 0;
 
@@ -377,7 +373,7 @@ cn_cbor * _COSE_encode_protected(COSE * pMessage, cose_errback * perr)
     pProtected = cn_cbor_index(pMessage->m_cbor, INDEX_PROTECTED);
     if ((pProtected != NULL) &&(pProtected->type != CN_CBOR_INVALID)) {
 errorReturn:
-        if (pbProtected != NULL) COSE_FREE(pbProtected, context);
+        if (pbProtected != NULL) COSE_FREE(pbProtected);
         return pProtected;
     }
 
@@ -473,14 +469,14 @@ bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COM
         }
     }
 
-    if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray, COSE_UNPROTECT_ONLY, perr)) goto errorReturn;
+    if (!_COSE_map_put(pMessage, COSE_Header_CounterSign, pArray, COSE_UNPROTECT_ONLY, CBOR_CONTEXT_PARAM_COMMA perr)) goto errorReturn;
 
     return true;
 
 errorReturn:
-    if (pArray != NULL) CN_CBOR_FREE(pArray, context);
-    if ((pcn != NULL) && (pcn->parent != NULL)) CN_CBOR_FREE(pcn, context);
-    if ((pcn2 != NULL) && (pcn2->parent != NULL)) CN_CBOR_FREE(pcn2, context);
+    if (pArray != NULL) CN_CBOR_FREE(pArray);
+    if ((pcn != NULL) && (pcn->parent != NULL)) CN_CBOR_FREE(pcn);
+    if ((pcn2 != NULL) && (pcn2->parent != NULL)) CN_CBOR_FREE(pcn2);
     return false;
 }
 

@@ -12,7 +12,7 @@
 #include "configure.h"
 #include "crypto.h"
 
-void _COSE_Enveloped_Release(COSE_Enveloped * p);
+void _COSE_Enveloped_Release(COSE_Enveloped * p CBOR_CONTEXT);
 
 COSE * EnvelopedRoot = NULL;
 
@@ -60,8 +60,8 @@ HCOSE_ENVELOPED COSE_Enveloped_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA co
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init(flags,&pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_Enveloped_Release(pobj);
-		COSE_FREE(pobj, context);
+		_COSE_Enveloped_Release(pobj CBOR_CONTEXT_PARAM);
+		COSE_FREE(pobj);
 		return NULL;
 	}
 
@@ -85,8 +85,8 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != NULL) {
-			_COSE_Enveloped_Release(pobj);
-			if (pIn == NULL) COSE_FREE(pobj, context);
+			_COSE_Enveloped_Release(pobj CBOR_CONTEXT_PARAM);
+			if (pIn == NULL) COSE_FREE(pobj);
 		}
 		return NULL;
 	}
@@ -115,11 +115,8 @@ HCOSE_ENVELOPED _COSE_Enveloped_Init_From_Object(cn_cbor * cbor, COSE_Enveloped 
 	return(HCOSE_ENVELOPED) pobj;
 }
 
-bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
+bool COSE_Enveloped_Free(HCOSE_ENVELOPED h CBOR_CONTEXT)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
-#endif
 	COSE_Enveloped * p = (COSE_Enveloped *)h;
 
 	if (!IsValidEnvelopedHandle(h)) return false;
@@ -130,32 +127,32 @@ bool COSE_Enveloped_Free(HCOSE_ENVELOPED h)
 	}
 
 #ifdef USE_CBOR_CONTEXT
-	context = ((COSE_Enveloped *)h)->m_message.m_allocContext;
+	//context = ((COSE_Enveloped *)h)->m_message.m_allocContext;
 #endif
 
 	_COSE_RemoveFromList(&EnvelopedRoot, &p->m_message);
 
-	_COSE_Enveloped_Release((COSE_Enveloped *)h);
+	_COSE_Enveloped_Release((COSE_Enveloped *)h CBOR_CONTEXT_PARAM);
 
-	COSE_FREE((COSE_Enveloped *)h, &context);
+	COSE_FREE((COSE_Enveloped *)h);
 
 	return true;
 }
 
-void _COSE_Enveloped_Release(COSE_Enveloped * p)
+void _COSE_Enveloped_Release(COSE_Enveloped * p CBOR_CONTEXT)
 {
 	COSE_RecipientInfo * pRecipient1;
 	COSE_RecipientInfo * pRecipient2;
 
-	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
+	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent);
 	//	if (p->pbIV != NULL) COSE_FREE(p->pbIV, &p->m_message.m_allocContext);
 
 	for (pRecipient1 = p->m_recipientFirst; pRecipient1 != NULL; pRecipient1 = pRecipient2) {
 		pRecipient2 = pRecipient1->m_recipientNext;
-		COSE_Recipient_Free((HCOSE_RECIPIENT)pRecipient1);
+		COSE_Recipient_Free((HCOSE_RECIPIENT)pRecipient1 CBOR_CONTEXT_PARAM);
 	}
 
-	_COSE_Release(&p->m_message);
+	_COSE_Release(&p->m_message CBOR_CONTEXT_PARAM);
 }
 
 bool COSE_Enveloped_decrypt(HCOSE_ENVELOPED h, HCOSE_RECIPIENT hRecip, cose_errback * perr)
@@ -181,14 +178,11 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	byte * pbKeyNew = NULL;
 	const byte * pbKey = NULL;
 	size_t cbitKey = 0;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
-#endif
 	byte * pbAuthData = NULL;
 	size_t cbAuthData;
 
 #ifdef USE_CBOR_CONTEXT
-	context = &pcose->m_message.m_allocContext;
+	//context = &pcose->m_message.m_allocContext;
 #endif
 
 	CHECK_CONDITION(!((pRecip != NULL) && (pbKeyIn != NULL)), COSE_ERR_INTERNAL);
@@ -197,10 +191,10 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 	if (cn == NULL) {
 	error:
 	errorReturn:
-		if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
+		if (pbAuthData != NULL) COSE_FREE(pbAuthData);
 		if (pbKeyNew != NULL) {
 			memset(pbKeyNew, 0xff, cbitKey / 8);
-			COSE_FREE(pbKeyNew, context);
+			COSE_FREE(pbKeyNew);
 		}
 		return false;
 	}
@@ -399,27 +393,27 @@ bool _COSE_Enveloped_decrypt(COSE_Enveloped * pcose, COSE_RecipientInfo * pRecip
 		break;
 	}
 
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (pbKeyNew != NULL) COSE_FREE(pbKeyNew, context);
+	if (pbAuthData != NULL) COSE_FREE(pbAuthData);
+	if (pbKeyNew != NULL) COSE_FREE(pbKeyNew);
 	if (perr != NULL) perr->err = COSE_ERR_NONE;
 
 	return true;
 }
 
-bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, cose_errback * perr)
+bool COSE_Enveloped_encrypt(HCOSE_ENVELOPED h, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Enveloped * pcose = (COSE_Enveloped *)h;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pcose->m_recipientFirst != NULL, COSE_ERR_INVALID_HANDLE);
 
-	return _COSE_Enveloped_encrypt(pcose, NULL, 0, "Encrypt", perr);
+	return _COSE_Enveloped_encrypt(pcose, NULL, 0, "Encrypt", CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return false;
 }
 
-bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, cose_errback * perr)
+bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_t cbKeyIn, const char * szContext, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	int alg;
 	int t;
@@ -427,9 +421,6 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 	const cn_cbor * cn_Alg = NULL;
 	byte * pbAuthData = NULL;
 	size_t cbitKey;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pcose->m_message.m_allocContext;
-#endif
 	bool fRet = false;
 	byte * pbKeyNew = NULL;
 	const byte * pbKey = NULL;
@@ -531,7 +522,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 				CHECK_CONDITION(pbKey == NULL, COSE_ERR_INVALID_PARAMETER);
 
 				t |= 1;
-				pbKeyNew = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, perr);
+				pbKeyNew = _COSE_RecipientInfo_generateKey(pri, alg, cbitKey, CBOR_CONTEXT_PARAM_COMMA perr);
 				cbKey = cbitKey / 8;
 				if (pbKeyNew == NULL) goto errorReturn;
 			}
@@ -552,7 +543,7 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 
 	//  Build protected headers
 
-	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, perr);
+	const cn_cbor * cbProtected = _COSE_encode_protected(&pcose->m_message, CBOR_CONTEXT_PARAM_COMMA perr);
 	if (cbProtected == NULL) goto errorReturn;
 
 #ifdef USE_COUNTER_SIGNATURES
@@ -647,10 +638,10 @@ bool _COSE_Enveloped_encrypt(COSE_Enveloped * pcose, const byte * pbKeyIn, size_
 	fRet = true;
 
 errorReturn:
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
+	if (pbAuthData != NULL) COSE_FREE(pbAuthData);
 	if (pbKeyNew != NULL) {
 		memset(pbKeyNew, 0, cbKey);
-		COSE_FREE(pbKeyNew, context);
+		COSE_FREE(pbKeyNew);
 	}
 	return fRet;
 }
@@ -730,25 +721,22 @@ cn_cbor * COSE_Enveloped_map_get_int(HCOSE_ENVELOPED h, int key, int flags, cose
 }
 
 
-bool COSE_Enveloped_map_put_int(HCOSE_ENVELOPED h, int key, cn_cbor * value, int flags, cose_errback * perr)
+bool COSE_Enveloped_map_put_int(HCOSE_ENVELOPED h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	CHECK_CONDITION(IsValidEnvelopedHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_Enveloped *)h)->m_message, key, value, flags, perr);
+	return _COSE_map_put(&((COSE_Enveloped *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return false;
 }
 
-bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, cose_errback * perr)
+bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_RecipientInfo * pRecip;
 	COSE_Enveloped * pEncrypt;
 	cn_cbor * pRecipients  = NULL;
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context;
-#endif
 	cn_cbor_errback cbor_error;
 
 	CHECK_CONDITION(IsValidEnvelopedHandle(hEnc), COSE_ERR_INVALID_HANDLE);
@@ -756,10 +744,6 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, c
 
 	pEncrypt = (COSE_Enveloped *)hEnc;
 	pRecip = (COSE_RecipientInfo *)hRecip;
-
-#ifdef USE_CBOR_CONTEXT
-	context = &pEncrypt->m_message.m_allocContext;
-#endif // USE_CBOR_CONTEXT
 
 	pRecip->m_recipientNext = pEncrypt->m_recipientFirst;
 	pEncrypt->m_recipientFirst = pRecip;
@@ -770,7 +754,7 @@ bool COSE_Enveloped_AddRecipient(HCOSE_ENVELOPED hEnc, HCOSE_RECIPIENT hRecip, c
 		CHECK_CONDITION_CBOR(pRecipients != NULL, cbor_error);
 
 		if (!_COSE_array_replace(&pEncrypt->m_message, pRecipients, INDEX_RECIPIENTS, CBOR_CONTEXT_PARAM_COMMA &cbor_error)) {
-			CN_CBOR_FREE(pRecipients, context);
+			CN_CBOR_FREE(pRecipients);
 			if (perr != NULL) perr->err = _MapFromCBOR(cbor_error);
 			goto errorReturn;
 		}
@@ -788,9 +772,6 @@ errorReturn:
 
 bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, const char * szContext, cose_errback * perr)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context * context = &pMessage->m_allocContext;
-#endif
 	cn_cbor_errback cbor_error;
 	byte  * pbAuthData;
 	size_t cbAuthData;
@@ -838,9 +819,9 @@ bool _COSE_Encrypt_Build_AAD(COSE * pMessage, byte ** ppbAAD, size_t * pcbAAD, c
 	return true;
 
 errorReturn:
-	if (pbAuthData != NULL) COSE_FREE(pbAuthData, context);
-	if (ptmp != NULL) CN_CBOR_FREE(ptmp, NULL);
-	if (pAuthData != NULL) CN_CBOR_FREE(pAuthData, context);
+	if (pbAuthData != NULL) COSE_FREE(pbAuthData);
+	if (ptmp != NULL) CN_CBOR_FREE(ptmp);
+	if (pAuthData != NULL) CN_CBOR_FREE(pAuthData);
 	return false;
 }
 

@@ -12,7 +12,7 @@
 #include "configure.h"
 #include "crypto.h"
 
-void _COSE_Encrypt_Release(COSE_Encrypt * p);
+void _COSE_Encrypt_Release(COSE_Encrypt * p  CBOR_CONTEXT);
 
 COSE * EncryptRoot = NULL;
 
@@ -44,8 +44,8 @@ HCOSE_ENCRYPT COSE_Encrypt_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_e
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init(flags, &pobj->m_message, COSE_enveloped_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_Encrypt_Release(pobj);
-		COSE_FREE(pobj, context);
+		_COSE_Encrypt_Release(pobj CBOR_CONTEXT_PARAM);
+		COSE_FREE(pobj);
 		return NULL;
 	}
 
@@ -69,8 +69,8 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 		perr->err = COSE_ERR_OUT_OF_MEMORY;
 	errorReturn:
 		if (pobj != NULL) {
-			_COSE_Encrypt_Release(pobj);
-			if (pIn == NULL)  COSE_FREE(pobj, context);
+			_COSE_Encrypt_Release(pobj CBOR_CONTEXT_PARAM);
+			if (pIn == NULL)  COSE_FREE(pobj);
 		}
 		return NULL;
 	}
@@ -87,33 +87,26 @@ HCOSE_ENCRYPT _COSE_Encrypt_Init_From_Object(cn_cbor * cbor, COSE_Encrypt * pIn,
 	return(HCOSE_ENCRYPT) pobj;
 }
 
-bool COSE_Encrypt_Free(HCOSE_ENCRYPT h)
+bool COSE_Encrypt_Free(HCOSE_ENCRYPT h CBOR_CONTEXT)
 {
-#ifdef USE_CBOR_CONTEXT
-	cn_cbor_context context;
-#endif
 	COSE_Encrypt * pEncrypt = (COSE_Encrypt *)h;
 
 	if (!IsValidEncryptHandle(h)) return false;
 
-#ifdef USE_CBOR_CONTEXT
-	context = ((COSE_Encrypt *)h)->m_message.m_allocContext;
-#endif
-
-	_COSE_Encrypt_Release(pEncrypt);
+	_COSE_Encrypt_Release(pEncrypt CBOR_CONTEXT_PARAM);
 
 	_COSE_RemoveFromList(&EncryptRoot, &pEncrypt->m_message);
 	
-	COSE_FREE((COSE_Encrypt *)h, &context);
+	COSE_FREE((COSE_Encrypt *)h);
 
 	return true;
 }
 
-void _COSE_Encrypt_Release(COSE_Encrypt * p)
+void _COSE_Encrypt_Release(COSE_Encrypt * p CBOR_CONTEXT)
 {
-	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent, &p->m_message.m_allocContext);
+	if (p->pbContent != NULL) COSE_FREE((void *) p->pbContent);
 
-	_COSE_Release(&p->m_message);
+	_COSE_Release(&p->m_message CBOR_CONTEXT_PARAM);
 }
 
 bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cose_errback * perr)
@@ -130,12 +123,12 @@ bool COSE_Encrypt_decrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cos
 	return f;
 }
 
-bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, cose_errback * perr)
+bool COSE_Encrypt_encrypt(HCOSE_ENCRYPT h, const byte * pbKey, size_t cbKey, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	CHECK_CONDITION(IsValidEncryptHandle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(pbKey != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_Enveloped_encrypt((COSE_Encrypt *)h, pbKey, cbKey, "Encrypt1", perr);
+	return _COSE_Enveloped_encrypt((COSE_Encrypt *)h, pbKey, cbKey, "Encrypt1", CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return false;
@@ -201,12 +194,12 @@ cn_cbor * COSE_Encrypt_map_get_int(HCOSE_ENCRYPT h, int key, int flags, cose_err
 }
 
 
-bool COSE_Encrypt_map_put_int(HCOSE_ENCRYPT h, int key, cn_cbor * value, int flags, cose_errback * perror)
+bool COSE_Encrypt_map_put_int(HCOSE_ENCRYPT h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perror)
 {
 	if (!IsValidEncryptHandle(h) || (value == NULL)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_PARAMETER;
 		return false;
 	}
 
-	return _COSE_map_put(&((COSE_Encrypt *)h)->m_message, key, value, flags, perror);
+	return _COSE_map_put(&((COSE_Encrypt *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perror);
 }
