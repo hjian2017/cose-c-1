@@ -14,10 +14,8 @@
 
 #include <stdlib.h>
 
-#include "PlatIncludes.h"
-#include "pal_test_main.h"
-
 #include "pal.h"
+#include "pal_BSP.h"
 
 #include "unity_fixture.h"
 #include "cose_test_runner.h"
