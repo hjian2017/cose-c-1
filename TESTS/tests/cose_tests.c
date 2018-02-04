@@ -22,7 +22,6 @@
 #include "json.h"
 #include "cose_tests.h"
 #include "cose_test_vectors.h"
-#include "dba_log.h"
 
 int CFails = 0;
 

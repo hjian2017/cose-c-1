@@ -6,6 +6,8 @@
 #ifndef __COSE_INT_H__
 #define __COSE_INT_H__
 
+#include "mbed_trace.h"
+
 #ifdef USE_COUNTER_SIGNATURES
 struct _COSE_COUNTER_SIGN;
 typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
@@ -257,6 +259,16 @@ extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONT
 #define CHECK_CONDITION(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}}
 #define FAIL_CONDITION(error) { DO_ASSERT; if (perr != NULL) {perr->err = error;} goto errorReturn;}
 #define CHECK_CONDITION_CBOR(condition, error) { if (!(condition)) { DO_ASSERT; if (perr != NULL) {perr->err = _MapFromCBOR(error);} goto errorReturn;}}
+#define CHECK_CONDITION_AND_PRINT_MESSAGE(condition, error, format, ...) {\
+	if (!(condition)) {\
+		DO_ASSERT; \
+		if (perr != NULL) {\
+			perr->err = error;\
+		}\
+		mbed_tracef(TRACE_LEVEL_ERROR, "cose", "%s", format, ##__VA_ARGS__);\
+		goto errorReturn;\
+	}\	
+}
 
 extern cn_cbor * _COSE_encode_protected(COSE * pMessage, CBOR_CONTEXT_COMMA cose_errback * perr);
 
