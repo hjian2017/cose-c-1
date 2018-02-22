@@ -297,7 +297,7 @@ extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONT
 		}\
 		mbed_tracef(TRACE_LEVEL_ERROR, "cose", "%s", format, ##__VA_ARGS__);\
 		goto errorReturn;\
-	}\	
+	}\
 }
 
 extern cn_cbor * _COSE_encode_protected(COSE * pMessage, CBOR_CONTEXT_COMMA cose_errback * perr);

@@ -174,7 +174,7 @@ static HCOSE _COSE_Create_HCOSE(const cn_cbor *coseObj, int * ptype, COSE_object
     cn_cbor_errback cbor_err;
     HCOSE h;
 
-    cbor = cborRoot = coseObj;
+    cbor = cborRoot = (cn_cbor*)coseObj;
     CHECK_CONDITION_CBOR(cbor != NULL, cbor_err);
 
 

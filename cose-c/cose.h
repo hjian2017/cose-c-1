@@ -54,7 +54,7 @@ typedef struct _cose_counterSignature * HCOSE_COUNTERSIGN;
 /**
 * All of the different kinds of errors
 */
-typedef enum cose_error {
+typedef enum {
 	/** No error has occurred */
 	COSE_ERR_NONE,
 	/** An invalid parameter was passed to a function */
@@ -76,7 +76,7 @@ typedef enum cose_error {
 	COSE_ERR_INTERNAL
 } cose_error;
 
-typedef enum cose_init_flags {
+typedef enum {
 	COSE_INIT_FLAGS_NONE=0,
 	COSE_INIT_FLAGS_DETACHED_CONTENT=1,
 	COSE_INIT_FLAGS_NO_CBOR_TAG=2,
