@@ -27,7 +27,6 @@
 
 #define TRACE_GROUP     "cose"  // Maximum 4 characters
 
-extern bool dhcp_done;
 static int g_unity_status = EXIT_FAILURE;
 static pal_args_t g_args = { 0 };
 
@@ -72,11 +71,6 @@ static void run_cose_component_tests_task(pal_args_t *args)
 
     setvbuf(stdout, (char *)NULL, _IONBF, 0); /* Avoid buffering on test output */
     tr_info("cose_component_tests: Starting component tests...\n");
-
-    // Wait until device is connected to the world
-    while (dhcp_done == 0) {
-        pal_osDelay(500);
-    }
     
 #ifdef USE_CBOR_CONTEXT
     cbor_ctx = cn_cbor_init_context(40);
@@ -117,6 +111,7 @@ cleanup:
 int main(int argc, char * argv[])
 {
     bool success = 0;
+    bspStatus_t bsp_result = BSP_SUCCESS;
 
     // Do not use argc/argv as those are not initialized
     // for armcc and may cause allocation failure.
@@ -126,8 +121,9 @@ int main(int argc, char * argv[])
     g_args.argc = 0;
     g_args.argv = NULL;
 
-    success = initPlatform();
-    if (success) {
+    success = false;
+    bsp_result = initPlatform(NULL);
+    if (bsp_result == BSP_SUCCESS) {
         success = runProgram(&run_cose_component_tests_task, &g_args);
     }
 
