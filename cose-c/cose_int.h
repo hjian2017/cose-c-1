@@ -295,7 +295,7 @@ extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONT
 		if (perr != NULL) {\
 			perr->err = error;\
 		}\
-		mbed_tracef(TRACE_LEVEL_ERROR, "cose", "%s", format, ##__VA_ARGS__);\
+		mbed_tracef(TRACE_LEVEL_ERROR, "cose", format, ##__VA_ARGS__);\
 		goto errorReturn;\
 	}\
 }

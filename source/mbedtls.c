@@ -170,17 +170,18 @@ bool ECDSA_Verify(
 
     // Create mbedTLS EC key (reminder: we currently (for demo purposes) treats the key as a byte stream (not as CBOR entity)
     mbedtlsStatus = mbedtls_ecp_point_read_binary(&grp, &ecKey, pKey, keySize);
-    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for mbedtls_ecp_point_read_binary (mbedtlsStatus = %u)", mbedtlsStatus);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for mbedtls_ecp_point_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
 
     mbedtlsStatus = mbedtls_mpi_read_binary(&r, signerSig->v.bytes, (signerSigLength / 2));
-    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus = %u)", mbedtlsStatus);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
 
     mbedtlsStatus = mbedtls_mpi_read_binary(&s, (signerSig->v.bytes + signerSigLength / 2), (signerSigLength / 2));
-    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus = %u)", mbedtlsStatus);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
 
     // Hit the actual EC verify
     mbedtlsStatus = mbedtls_ecdsa_verify(&grp, rgbDigest, rgbDigestSize, &ecKey, &r, &s);
-    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_CRYPTO_FAIL, "Failed for mbedtls_ecdsa_verify (mbedtlsStatus = %u)", mbedtlsStatus);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_CRYPTO_FAIL, "Failed for mbedtls_ecdsa_verify (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
+
 
 errorReturn:
     mbedtls_mpi_free(&r);
