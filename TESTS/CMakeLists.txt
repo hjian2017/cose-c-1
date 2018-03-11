@@ -5,6 +5,15 @@
 ## prepare CMAKE
 cmake_minimum_required(VERSION 2.6)
 
+# COSE_TESTS_ENABLED is an environment variable.
+# define "COSE_TESTS_ENABLED" only if you would like to build COSE unit-tests.
+# By default, COSE_TESTS_ENABLED is NOT defined, meaning COSE's tests are disabled and compiled out. 
+
+if(NOT DEFINED ENV{COSE_TESTS_ENABLED})
+	return()
+endif()
+
+
 # PAL's example code reference
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../mbed-client-pal/Examples/PlatformBSP/Include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../mbed-client-pal/Test/Unitest/Includes)

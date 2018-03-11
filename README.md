@@ -36,3 +36,7 @@ This allows for all of the items allocated in that large block to be freed in a 
 
 * Build with USE_CONTEXT and pass in a block allocator:  This model works, but requires that you provide the allocator.
 
+##Testing
+The testing are disabled by default.
+To enable COSE unit-tests run the following command from your working shell prior building -
+export COSE_TESTS_ENABLED=1
