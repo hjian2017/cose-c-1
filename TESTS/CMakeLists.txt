@@ -15,7 +15,6 @@ endif()
 
 
 # PAL's example code reference
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../mbed-client-pal/Examples/PlatformBSP/Include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../mbed-client-pal/Test/Unitest/Includes)
 
 # includes

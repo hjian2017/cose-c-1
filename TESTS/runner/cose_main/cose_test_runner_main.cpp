@@ -14,8 +14,8 @@
 
 #include <stdlib.h>
 
+#include "common_setup.h"
 #include "pal.h"
-#include "pal_BSP.h"
 
 #include "unity_fixture.h"
 #include "cose_test_runner.h"
@@ -28,14 +28,12 @@
 #define TRACE_GROUP     "cose"  // Maximum 4 characters
 
 static int g_unity_status = EXIT_FAILURE;
-static pal_args_t g_args = { 0 };
-
 
 /**
 *
 * Runs all tests in a task of its own
 */
-static void run_cose_component_tests_task(pal_args_t *args)
+static void run_cose_component_tests_task()
 {
     int rc = 0;
     bool success = 0;
@@ -46,26 +44,31 @@ static void run_cose_component_tests_task(pal_args_t *args)
     cn_cbor_context *cbor_ctx;
 #endif
 
-    int myargc = args->argc + 2;
+    int myargc = 2;
     const char **myargv = (const char **)calloc(myargc, sizeof(char *));
     if (myargv == NULL) {
         goto cleanup;
     }
     myargv[0] = "cose_component_tests";
     myargv[1] = "-v";
-    for (int i = 0; i < args->argc; i++) {
-        myargv[i + 2] = args->argv[i];
+
+    //Initialize mbed-trace
+    success = mbed_trace_helper_init(TRACE_ACTIVE_LEVEL_ALL, is_mutex_used);
+    if (success != true) {
+        goto cleanup;
+    }
+
+    mcc_platform_sw_build_info();
+
+    // Initialize storage
+    success = mcc_platform_storage_init() == 0;
+    if (success != true) {
+        goto cleanup;
     }
 
     // Initialize PAL
     pal_status = pal_init();
     if (pal_status != PAL_SUCCESS) {
-        goto cleanup;
-    }
-
-    //Initialize mbed-trace
-    success = mbed_trace_helper_init(TRACE_ACTIVE_LEVEL_ALL, is_mutex_used);
-    if (success != true) {
         goto cleanup;
     }
 
@@ -111,20 +114,15 @@ cleanup:
 int main(int argc, char * argv[])
 {
     bool success = 0;
-    bspStatus_t bsp_result = BSP_SUCCESS;
 
     // Do not use argc/argv as those are not initialized
     // for armcc and may cause allocation failure.
     (void)argc;
     (void)argv;
 
-    g_args.argc = 0;
-    g_args.argv = NULL;
-
-    success = false;
-    bsp_result = initPlatform(NULL);
-    if (bsp_result == BSP_SUCCESS) {
-        success = runProgram(&run_cose_component_tests_task, &g_args);
+    success = (mcc_platform_init() == 0);
+    if (success) {
+        success = mcc_platform_run_program(&run_cose_component_tests_task);
     }
 
     return success ? g_unity_status : EXIT_FAILURE;
