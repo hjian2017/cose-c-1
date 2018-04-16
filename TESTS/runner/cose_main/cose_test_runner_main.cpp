@@ -60,18 +60,6 @@ static void run_cose_component_tests_task()
 
     mcc_platform_sw_build_info();
 
-    // Initialize storage
-    success = mcc_platform_storage_init() == 0;
-    if (success != true) {
-        goto cleanup;
-    }
-
-    // Initialize PAL
-    pal_status = pal_init();
-    if (pal_status != PAL_SUCCESS) {
-        goto cleanup;
-    }
-
     setvbuf(stdout, (char *)NULL, _IONBF, 0); /* Avoid buffering on test output */
     tr_info("cose_component_tests: Starting component tests...\n");
     
@@ -106,7 +94,6 @@ cleanup:
     tr_cmdline("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 
     mbed_trace_helper_finish();
-    pal_destroy();
     free(myargv);
     fflush(stdout);
 }
