@@ -58,6 +58,10 @@ static void run_cose_component_tests_task()
         goto cleanup;
     }
 
+#ifndef SDA_OS_LINUX
+    mcc_platform_do_wait(3000);
+#endif
+
     mcc_platform_sw_build_info();
 
     setvbuf(stdout, (char *)NULL, _IONBF, 0); /* Avoid buffering on test output */
