@@ -22,6 +22,7 @@
 #include "json.h"
 #include "cose_tests.h"
 #include "cose_test_vectors.h"
+#include "cose_tcbor_test_vectors.h"
 
 int CFails = 0;
 
@@ -646,6 +647,13 @@ void RunAlgTest(char *cbor_input_json_string)
             //FIXME: yet implemented by porting layer
             //BuildSign0Message(pControl);
         }
+    }
+    /*  This group calls functions that checks tiny cbor functionality */
+    else if (cn_cbor_mapget_string(pInput, "sign0_buffer") != NULL) {
+        if (ValidateSign0Buffer(pControl CBOR_CONTEXT_PARAM)) {
+            //FIXME: yet implemented by porting layer
+            //BuildSign0Message(pControl);
+        }
     } else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
         if (ValidateEncrypt(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
@@ -655,6 +663,8 @@ void RunAlgTest(char *cbor_input_json_string)
 
     return;
 }
+
+
 
 TEST_GROUP(CoseTests);
 
@@ -684,6 +694,27 @@ TEST(CoseTests, sign_pass_03)
 {
     CFails = 0;
     RunAlgTest(sign_pass_03);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+//Checks tiny cbor functions
+TEST(CoseTests, sign_pass_buffer_01)
+{
+    CFails = 0;
+    RunAlgTest(sign_pass_buffer_01);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+//Checks tiny cbor functions
+TEST(CoseTests, sign_pass_buffer_02)
+{
+    CFails = 0;
+    RunAlgTest(sign_pass_buffer_02);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+//Checks tiny cbor functions
+TEST(CoseTests, sign_pass_buffer_03)
+{
+    CFails = 0;
+    RunAlgTest(sign_pass_buffer_03);
     TEST_ASSERT_EQUAL_INT(0, CFails);
 }
 
@@ -736,6 +767,10 @@ TEST_GROUP_RUNNER(CoseTests)
     RUN_TEST_CASE(CoseTests, sign_pass_01);
     RUN_TEST_CASE(CoseTests, sign_pass_02);
     RUN_TEST_CASE(CoseTests, sign_pass_03);
+    //Tests sign_pass_buffer_01, sign_pass_buffer_02 and sign_pass_buffer_03 checks tiny cbor functions
+    RUN_TEST_CASE(CoseTests, sign_pass_buffer_01);
+    RUN_TEST_CASE(CoseTests, sign_pass_buffer_02);
+    RUN_TEST_CASE(CoseTests, sign_pass_buffer_03);
     
     // Negatives
     RUN_TEST_CASE(CoseTests, sign_fail_01);

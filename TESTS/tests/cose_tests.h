@@ -25,7 +25,12 @@ int ValidateSigned(const cn_cbor * pControl CBOR_CONTEXT);
 int SignMessage(CBOR_CONTEXT_NO_COMMA);
 int BuildSignedMessage(const cn_cbor * pControl CBOR_CONTEXT);
 int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT);
+/*  This function uses tiny cbor functionality */
+int ValidateSign0Buffer(const cn_cbor * pControl CBOR_CONTEXT);
 int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT);
+/*  This function uses tiny cbor functionality */
+int BuildSign0MessageWithCoseBuffer(const cn_cbor * pControl CBOR_CONTEXT);
+
 void Sign_Corners(CBOR_CONTEXT_NO_COMMA);
 void Sign0_Corners(CBOR_CONTEXT_NO_COMMA);
 

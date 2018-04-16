@@ -276,6 +276,20 @@ bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCo
     return (status) ? _COSE_Sign0_validate(hSign, pKey, keySize, perr) : status;
 }
 
+/*  This function uses tiny cbor functionality */
+bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize ,cose_errback * perr)
+{
+    bool status = false;
+    byte pKey[1024];
+    size_t keySize;
+
+    // Does NULL check for pKeyCose
+    status = GetECKeyFromCoseBuffer(coseEncBuffer, coseEncBufferSize, pKey, sizeof(pKey), &keySize, perr);
+
+    return (status) ? _COSE_Sign0_validate(hSign, pKey, keySize, perr) : status;
+}
+
+
 bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
 {
     return _COSE_Sign0_validate(hSign, pKey, keySize, perr);
