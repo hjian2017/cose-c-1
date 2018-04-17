@@ -32,7 +32,9 @@
 #define __COSE_H__
 
 #include "cn-cbor.h"
+#ifdef USE_TINY_CBOR
 #include "tinycbor.h"
+#endif
 #include "configure.h"
 
 #ifdef __cplusplus
@@ -397,13 +399,17 @@ bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_
 // Validate with a COSE_Key object (a cbor map within the cwt, check out RFC 8152)
 bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCose, cose_errback * perr);
 /*  This function uses tiny cbor functionality */
+#ifdef USE_TINY_CBOR
 bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr);
+#endif
 cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
 bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * errp);
 
 bool GetECKeyFromCoseKeyObj(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyOutSize, size_t *ecKeySizeOut, cose_errback *perr);
+#ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
 bool GetECKeyFromCoseBuffer(const uint8_t *coseEncBuffer, size_t coseEncBufferSize, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr);
+#endif
 /*
  * Counter Signature Routines
  */

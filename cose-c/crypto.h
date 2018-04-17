@@ -32,6 +32,14 @@
 #define __COSE_CRYPTO_H__
 
 
+#define COSE_Key_EC_Curve -1
+#define COSE_Key_EC_X -2
+#define COSE_Key_EC_Y -3
+
+// groupSizeBytes is always the size of the key / 2.
+// keySize has an extra byte containing compression type, so the actual key size is keySize - 1
+#define EC_GROUP_SIZE(keySize) ((keySize - 1) / 2)
+
 /**
 * Perform an AES-CCM Decryption operation
 *

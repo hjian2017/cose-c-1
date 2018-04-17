@@ -316,6 +316,7 @@ returnError:
 	return 0;
 }
 
+#ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
 int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
@@ -339,7 +340,7 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
     }
 
     if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) goto returnError;
-    pSign = cn_cbor_mapget_string(pInput, "sign0_buffer");
+    pSign = cn_cbor_mapget_string(pInput, "sign0_tiny_cbor");
     if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
     hSig = (HCOSE_SIGN0)COSE_Decode(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
@@ -405,6 +406,7 @@ returnError:
     CFails += 1;
     return 0;
 }
+#endif
 
 int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT)
 {
@@ -413,16 +415,16 @@ int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT)
 
 	return _ValidateSign0(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
-
+#ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
-int ValidateSign0Buffer(const cn_cbor * pControl CBOR_CONTEXT)
+int ValidateSign0BufferTinyCbor(const cn_cbor * pControl CBOR_CONTEXT)
 {
     int cbEncoded;
     byte * pbEncoded = GetCBOREncoding(pControl, &cbEncoded);
 
     return _ValidateSign0_with_buffer(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
-
+#endif
 int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	//
@@ -455,7 +457,6 @@ int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT)
 	cb = COSE_Encode((HCOSE)hSignObj, rgb, 0, cb);
 
 	COSE_Sign0_Free(hSignObj CBOR_CONTEXT_PARAM);
-    printf("\n  _ValidateSign0  !!!!!");
 
 	int f = _ValidateSign0(pControl, rgb, cb CBOR_CONTEXT_PARAM);
 
@@ -466,7 +467,7 @@ returnError:
 	CFails += 1;
 	return 1;
 }
-
+#ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
 int BuildSign0MessageWithCoseBuffer(const cn_cbor * pControl CBOR_CONTEXT)
 {
@@ -501,7 +502,7 @@ int BuildSign0MessageWithCoseBuffer(const cn_cbor * pControl CBOR_CONTEXT)
 
     COSE_Sign0_Free(hSignObj CBOR_CONTEXT_PARAM);
 
-    int f = _ValidateSign0_with_buffer(pControl, rgb, cb CBOR_CONTEXT_PARAM);
+    int f = _ValidateSign0_with_buffer_tiny_cbor(pControl, rgb, cb CBOR_CONTEXT_PARAM);
 
     free(rgb);
     return f;
@@ -510,6 +511,7 @@ returnError:
     CFails += 1;
     return 1;
 }
+#endif
 
 void Sign_Corners(CBOR_CONTEXT_NO_COMMA)
 {

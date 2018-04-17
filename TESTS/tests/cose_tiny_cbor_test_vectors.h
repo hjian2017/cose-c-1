@@ -18,13 +18,13 @@
 
 ///////////// POSITIVES ///////////////
 
+#ifdef USE_TINY_CBOR
 
-
-char sign_pass_buffer_01[] = "{" \
+char sign_pass_tiny_cbor_01[] = "{" \
 "\"title\" : \"sign - pass - 01: Redo protected\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_buffer\" : {"\
+"\"sign0_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" :\"11\","\
@@ -53,11 +53,11 @@ char sign_pass_buffer_01[] = "{" \
 "}"\
 "}";
 
-char sign_pass_buffer_02[] = "{" \
+char sign_pass_tiny_cbor_02[] = "{" \
 "\"title\":\"sign-pass-02: External\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_buffer\" : {"\
+"\"sign0_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\" : \"EC\","\
 "\"kid\" : \"11\","\
@@ -86,11 +86,11 @@ char sign_pass_buffer_02[] = "{" \
 "}"\
 "}";
 
-char sign_pass_buffer_03[] = "{" \
+char sign_pass_tiny_cbor_03[] = "{" \
 "\"title\":\"sign-pass-03: Remove CBOR Tag\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_buffer\" : {"\
+"\"sign0_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" : \"11\","\
@@ -120,4 +120,4 @@ char sign_pass_buffer_03[] = "{" \
 "\"cbor\" : \"8443A10126A10442313154546869732069732074686520636F6E74656E742E58408EB33E4CA31D1C465AB05AAC34CC6B23D58FEF5C083106C4D25A91AEF0B0117E2AF9A291AA32E14AB834DC56ED2A223444547E01F11D3B0916E5A4C345CACB36\""\
 "}"\
 "}";
-
+#endif
