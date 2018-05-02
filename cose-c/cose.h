@@ -106,6 +106,7 @@ typedef enum {
 
 //  Generic functions for the COSE library
 
+
 /**
 * Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
 *
@@ -128,6 +129,30 @@ typedef enum {
 */
 HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);
 
+#ifdef USE_TINY_CBOR 
+/**
+* Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
+*
+* The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
+* Note: If a COSE is initialized using this function, coseObj provided will NOT be freed when calling COSE_<type>_Free(). caller must free it seperately.
+* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign0_object, since this is the only type currently in use.
+*        to support this functionality for other types, then inside the _COSE_Create_HCOSE() functions that COSE_Init() calls,
+*        we should update the correct owner flag in the COSE object of that type.
+*
+* @param[in]  coseBuffer       Pointer to an allocated encoded CBOR buffer containing the COSE.
+* @param[in]  coseBufferSize   Size of an allocated encoded CBOR buffer containing the COSE.
+* @param[out] pType         Pointer to the location where the COSE_object_type will be output to the caller.
+*                           Should be the same as the provided struct_type.
+* @param[in]  struct_type   Enum representing the type of COSE.
+* @param[in]  CBOR_CONTEXT  Allocation context (only if USE_CBOR_CONTEXT is defined).
+* @param[out] cose_errback  Pointer to COSE error object where error code will be stored. Can be NULL.
+*
+* @return
+*       HCOSE handle which points to the specific COSE object based on the struct_type.
+*       NULL if error has occurred.
+*/
+HCOSE COSE_Init_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr);
+#endif
 /**
 * Create an HCOSE from an encoded buffer containing a COSE.
 *
@@ -394,8 +419,13 @@ bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbC
 bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
+#ifdef USE_TINY_CBOR
+// Validate with a user provided public key
+bool COSE_Sign0_validate_with_raw_pk_tiny(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
+#else
 // Validate with a user provided public key
 bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
+#endif
 // Validate with a COSE_Key object (a cbor map within the cwt, check out RFC 8152)
 bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCose, cose_errback * perr);
 /*  This function uses tiny cbor functionality */

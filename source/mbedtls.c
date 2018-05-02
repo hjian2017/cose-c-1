@@ -118,7 +118,6 @@ bool ECDSA_Verify(
     palStatus_t palStatus;
     unsigned char rgbDigest[PAL_SHA256_SIZE];
     uint32_t rgbDigestSize = sizeof(rgbDigest);
-
     cn_cbor *signerSig;
     int signerSigLength;
 
@@ -155,10 +154,12 @@ bool ECDSA_Verify(
 
     // Fetch the signature to check against and verify it is legit
 
+
     signerSig = _COSE_arrayget_int(pSigner, index);
     CHECK_CONDITION_AND_PRINT_MESSAGE((signerSig != NULL), COSE_ERR_INVALID_PARAMETER, "Failed for _COSE_arrayget_int");
-    signerSigLength = signerSig->length;   
+    signerSigLength = signerSig->length;
     CHECK_CONDITION_AND_PRINT_MESSAGE(((signerSigLength / 2) == groupSizeBytes), COSE_ERR_INVALID_PARAMETER, "Signer invalid signature length");
+
 
     // Create mbedTLS EC key (reminder: we currently (for demo purposes) treats the key as a byte stream (not as CBOR entity)
     mbedtlsStatus = mbedtls_ecp_point_read_binary(&grp, &ecKey, pKey, keySize);
@@ -187,6 +188,105 @@ errorReturn:
 
     return true; // success
 }
+
+#ifdef USE_TINY_CBOR
+bool ECDSA_Verify_tiny(
+    COSE *pSigner,
+    int index,
+    const byte *pKey,
+    size_t keySize,
+    int cbitDigest,
+    const unsigned char *rgbToSign,
+    size_t cbToSign,
+    cose_errback *perr)
+{
+    palStatus_t palStatus;
+    unsigned char rgbDigest[PAL_SHA256_SIZE];
+    uint32_t rgbDigestSize = sizeof(rgbDigest);
+    CborParser parser;
+    CborValue value;
+    CborValue signerSig;
+    uint8_t *sig_buffer = NULL;
+    size_t sig_buffer_size = 0;
+    CborError cbor_error = CborNoError;
+    int signerSigLength;
+
+    int mbedtlsStatus;
+    mbedtls_mpi r, s;
+    mbedtls_ecp_group grp;
+
+    cose_errback error = { 0 };
+    if (perr == NULL) perr = &error;
+
+    int groupSizeBytes;
+
+    groupSizeBytes = EC_GROUP_SIZE(keySize);
+
+    // FIXME: for demo purposes it is assumed that we're getting the key in DER format from the KCM,
+    // when we will switch to a "proof of possession" we have to parse a CBOR object to extract the public key material.
+    mbedtls_ecp_point ecKey;
+
+    mbedtls_ecp_point_init(&ecKey);
+    mbedtls_ecp_group_init(&grp);
+    mbedtls_ecp_group_load(&grp, MBEDTLS_ECP_DP_SECP256R1);
+
+    // Import R and S points as mbedTLS entities
+    mbedtls_mpi_init(&r);
+    mbedtls_mpi_init(&s);
+
+    // Assume success at first
+    perr->err = COSE_ERR_NONE;
+
+    // Compute digest on the input hash data
+
+    palStatus = pal_sha256(rgbToSign, cbToSign, rgbDigest);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((palStatus == PAL_SUCCESS), COSE_ERR_CRYPTO_FAIL, "Failed for pal_sha256 (paStatus = %" PRIu32 ")", palStatus);
+
+    // Fetch the signature to check against and verify it is legit
+
+
+    //Retrieve the data from the message
+    cbor_error = cbor_parser_init(pSigner->message_cbor.buffer, pSigner->message_cbor.buffer_size, CborIteratorFlag_NegativeInteger, &parser, &value);
+    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+
+    cbor_error = cbor_get_array_element(&value, index, &signerSig);
+    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+    CHECK_CONDITION(cbor_value_is_byte_string(&signerSig) == true, cbor_error);
+
+    cbor_error = cbor_value_get_byte_string_chunk(&signerSig, &sig_buffer, &signerSigLength, NULL);
+    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+    CHECK_CONDITION_AND_PRINT_MESSAGE(((signerSigLength / 2) == groupSizeBytes), COSE_ERR_INVALID_PARAMETER, "Signer invalid signature length");
+
+
+    // Create mbedTLS EC key (reminder: we currently (for demo purposes) treats the key as a byte stream (not as CBOR entity)
+    mbedtlsStatus = mbedtls_ecp_point_read_binary(&grp, &ecKey, pKey, keySize);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for mbedtls_ecp_point_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
+
+    mbedtlsStatus = mbedtls_mpi_read_binary(&r, sig_buffer, (signerSigLength / 2));
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
+
+
+    mbedtlsStatus = mbedtls_mpi_read_binary(&s, (sig_buffer + signerSigLength / 2), (signerSigLength / 2));
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_INTERNAL, "Failed for bedtls_mpi_read_binary (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
+
+    // Hit the actual EC verify
+    mbedtlsStatus = mbedtls_ecdsa_verify(&grp, rgbDigest, rgbDigestSize, &ecKey, &r, &s);
+    CHECK_CONDITION_AND_PRINT_MESSAGE((mbedtlsStatus == 0), COSE_ERR_CRYPTO_FAIL, "Failed for mbedtls_ecdsa_verify (mbedtlsStatus =  %" PRIi32 ")", mbedtlsStatus);
+
+errorReturn:
+    mbedtls_mpi_free(&r);
+    mbedtls_mpi_free(&s);
+    mbedtls_ecp_point_free(&ecKey);
+    mbedtls_ecp_group_free(&grp);
+
+    if (perr->err != COSE_ERR_NONE) {
+        return false;
+    }
+
+    return true; // success
+}
+#endif
+
 
 bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {

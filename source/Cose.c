@@ -89,7 +89,96 @@ bool _COSE_Init(COSE_INIT_FLAGS flags, COSE* pobj, int msgType, CBOR_CONTEXT_COM
 errorReturn:
     return false;
 }
+#ifdef USE_TINY_CBOR
+bool _COSE_Init_From_Object_tiny(COSE* pobj, const uint8_t *coseBuffer, size_t coseBufferSize, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    const cn_cbor * pmap = NULL;
+    uint8_t *map_buffer = NULL;
+    size_t map_buffer_size = 0;
+    cn_cbor_errback errState; // = { 0 };
+    CborValue value;
+    CborValue value_container;
+    CborValue array_element;
+    CborParser parser;
+    CborError cbor_error = CborNoError;
 
+#ifdef USE_CBOR_CONTEXT
+    //if (cbor_context != NULL) pobj->m_allocContext = *cbor_context;
+#endif
+    //Set message cbor and root cbor
+    pobj->message_root_cbor.buffer = coseBuffer;
+    pobj->message_root_cbor.buffer_size = coseBufferSize;
+    pobj->message_cbor.buffer = coseBuffer;
+    pobj->message_cbor.buffer_size = coseBufferSize;
+
+    //Parse coseBuffer
+    cbor_error = cbor_parser_init(coseBuffer, coseBufferSize, CborIteratorFlag_NegativeInteger, &parser, &value);
+    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+
+    if (value.type == CborTagType) {
+        //Init container of parsed value
+        cbor_error = cbor_init_container(&value, &value_container);
+        CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+    }
+    else {
+        value_container = value;
+    }
+
+    //Iterate the container until type is tag
+    while (value_container.type == CborTagType) {
+        //Get next value object
+        cbor_error = cbor_get_next_container_element(&value_container);
+        CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_CBOR);
+    }
+    //Update message cbor
+    cbor_error = cbor_get_cbor_payload_buffer_in_container(&value_container, &pobj->message_cbor.buffer, &pobj->message_cbor.buffer_size);
+    CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_CBOR);
+
+
+    //Try to get protected map from cose buffer
+    cbor_error = cbor_get_array_element(&value_container, INDEX_PROTECTED, &array_element);
+    CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_INVALID_PARAMETER);
+    CHECK_CONDITION(cbor_value_is_byte_string(&array_element) == true, COSE_ERR_INVALID_PARAMETER);
+
+    cbor_error = cbor_value_get_string_length(&array_element, &map_buffer_size);
+    CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_INVALID_PARAMETER);
+
+    if (map_buffer_size == 0) {
+        pobj->message_protected_map_cbor.buffer = NULL;
+        pobj->message_protected_map_cbor.buffer_size = 0;
+        pobj->message_protected_map_cbor.is_map_initialized = true;
+    }
+    else {
+        //Update message protected map
+        cbor_error = cbor_value_get_byte_string_chunk(&array_element, (const uint8_t **)&(pobj->message_protected_map_cbor.buffer), &pobj->message_protected_map_cbor.buffer_size, NULL);
+        CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_INVALID_PARAMETER);
+        pobj->message_protected_map_cbor.is_map_initialized = true;
+    }
+
+    //Try to get unprotected map from cose buffer
+    cbor_error = cbor_get_array_element(&value_container, INDEX_UNPROTECTED, &array_element);
+    CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_INVALID_PARAMETER);
+    CHECK_CONDITION(cbor_value_is_map(&array_element) == true, COSE_ERR_INVALID_PARAMETER);
+
+    cbor_error = cbor_get_cbor_payload_buffer_in_container(&array_element, &pobj->message_unprotected_map_cbor.buffer, &pobj->message_unprotected_map_cbor.buffer_size);
+    CHECK_CONDITION(cbor_error == CborNoError, COSE_ERR_INVALID_PARAMETER);
+    pobj->message_unprotected_map_cbor.is_map_initialized = true;
+
+    pobj->m_ownUnprotectedMap = false;
+
+    pobj->message_dont_send_map_cbor.buffer = NULL;
+    pobj->message_dont_send_map_cbor.buffer_size = 0;
+    pobj->message_dont_send_map_cbor.is_map_initialized = true;
+
+    pobj->m_ownMsg = true;
+    pobj->m_refCount = 1;
+
+    return true;
+
+errorReturn:
+    return false;
+}
+#endif
 bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
     const cn_cbor * pmap = NULL;
@@ -167,6 +256,76 @@ void _COSE_Release(COSE * pobj CBOR_CONTEXT)
 *       HCOSE handle which points to the specific COSE object based on the struct_type.
 *       NULL if error has occurred.
 */
+#ifdef USE_TINY_CBOR
+static HCOSE _COSE_Create_HCOSE_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, int * ptype, COSE_object_type struct_type, bool isOwner, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    CborValue value;
+    CborValue value_container;
+    CborValue map_element;
+    CborParser parser;
+    CborError cbor_err = CborNoError;
+    CborTag tag_value;
+
+    HCOSE h;
+    CHECK_CONDITION((coseBuffer != NULL || coseBufferSize == 0), COSE_ERR_INVALID_PARAMETER);
+
+    //Parse coseBuffer
+    cbor_err = cbor_parser_init(coseBuffer, coseBufferSize, CborIteratorFlag_NegativeInteger, &parser, &value);
+    CHECK_CONDITION(cbor_err == CborNoError, cbor_err);
+
+
+    if (value.type == CborTagType) {
+        //Init container of parsed value
+        cbor_err = cbor_init_container(&value, &value_container);
+        CHECK_CONDITION(cbor_err == CborNoError, cbor_err);
+    }  else {
+        *ptype = struct_type;
+        value_container = value;
+    }
+
+    //Iterate the container until type is tag
+    while (value_container.type == CborTagType) {
+        //Get value of the tag
+        cbor_err = cbor_value_get_tag(&value_container, &tag_value);
+        CHECK_CONDITION(cbor_err == CborNoError, cbor_err);
+
+        //Set tag value to ptype
+        *ptype = tag_value;
+
+        //Get next value object
+        cbor_err = cbor_get_next_container_element(&value_container);
+        CHECK_CONDITION(cbor_err == CborNoError, cbor_err);
+    }
+
+
+    CHECK_CONDITION(value_container.type == CborArrayType, COSE_ERR_INVALID_PARAMETER);
+
+    //Init HCOSE
+    switch (*ptype) {
+
+    case COSE_sign0_object:
+        h = (HCOSE)_COSE_Sign0_Init_From_Object_tiny(coseBuffer, coseBufferSize, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+        if (h == NULL) {
+            goto errorReturn;
+        }
+
+        // By default _COSE_Sign0_Init_From_Object sets pSign0->m_message.m_ownMsg to 1
+        COSE_Sign0Message *pSign0 = (COSE_Sign0Message *)(h);
+        if (!isOwner) {
+            pSign0->m_message.m_ownMsg = 0;
+        }
+        break;
+
+    default:
+        FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+    }
+
+    return h;
+
+errorReturn:
+    return NULL;
+}
+#endif
 static HCOSE _COSE_Create_HCOSE(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_type, bool isOwner, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
     cn_cbor * cbor = NULL;
@@ -251,7 +410,12 @@ HCOSE COSE_Init(const cn_cbor *coseObj, int * ptype, COSE_object_type struct_typ
 {
     return _COSE_Create_HCOSE(coseObj, ptype, struct_type, false CBOR_CONTEXT_PARAM, perr);
 }
-
+#ifdef USE_TINY_CBOR
+HCOSE COSE_Init_tiny(const uint8_t *coseBuffer,size_t coseBufferSize, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    return _COSE_Create_HCOSE_tiny(coseBuffer, coseBufferSize,ptype, struct_type, false CBOR_CONTEXT_PARAM, perr);
+}
+#endif
 
 // This decodes and calls COSE_Init
 HCOSE COSE_Decode(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
@@ -274,6 +438,26 @@ errorReturn:
     cn_cbor_free(cose CBOR_CONTEXT_PARAM);
     return NULL;
 }
+
+#ifdef USE_TINY_CBOR
+HCOSE COSE_Decode_tiny(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, CBOR_CONTEXT_COMMA cose_errback * perr)
+{
+    cn_cbor * cose = NULL;
+    cn_cbor_errback cbor_err;
+    HCOSE h;
+
+    CHECK_CONDITION((rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
+
+    h = _COSE_Create_HCOSE_tiny(rgbData, cbData, ptype, struct_type, true, CBOR_CONTEXT_PARAM_COMMA perr);
+    CHECK_CONDITION((h != NULL), COSE_ERR_CBOR);
+
+    return h;
+
+errorReturn:
+    cn_cbor_free(cose CBOR_CONTEXT_PARAM);
+    return NULL;
+}
+#endif
 
 
 size_t COSE_Encode(HCOSE msg, byte * rgb, size_t ib, size_t cb)
@@ -334,6 +518,65 @@ cn_cbor * _COSE_map_get_int(COSE * pcose, int key, int flags, cose_errback * per
 
     return p;
 }
+
+#ifdef USE_TINY_CBOR
+static get_map_value_from_buffer(uint8_t *map_buffer, size_t map_buffer_size, int key, uint8_t **map_value_buffer, size_t *map_value_buffer_size) {
+
+    CborValue map;
+    CborParser parser;
+    CborValue map_value;
+    CborError  cbor_err = CborNoError;
+
+    //Parse coseBuffer
+    cbor_err = cbor_parser_init(map_buffer, map_buffer_size, CborIteratorFlag_NegativeInteger, &parser, &map);
+    if (cbor_err != CborNoError) {
+        return false;
+    }
+
+    cbor_err = cbor_get_map_element_by_int_key(&map, key, &map_value);
+    if (cbor_err != CborNoError) {
+        return false;
+    }
+
+    cbor_err = cbor_get_cbor_payload_buffer_in_container(&map_value, map_value_buffer, map_value_buffer_size);
+    if (cbor_err != CborNoError) {
+        return false;
+    }
+
+    return true;
+
+}
+bool  _COSE_map_get_int_tiny(COSE * pcose, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror )
+{
+    bool status = false;
+    HCOSE h;
+    uint8_t *supported_map_buffer = NULL;
+    size_t supported_map_buffer_size = 0;
+
+    if (perror != NULL) perror->err = COSE_ERR_NONE;
+
+    if ((pcose->message_protected_map_cbor.buffer != NULL && pcose->message_protected_map_cbor.is_map_initialized == true) && ((flags & COSE_PROTECT_ONLY) != 0)) {
+
+        status = get_map_value_from_buffer(pcose->message_protected_map_cbor.buffer, pcose->message_protected_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
+        if (status == true)
+            return;
+    }
+
+    if ((pcose->message_unprotected_map_cbor.buffer != NULL && pcose->message_unprotected_map_cbor.is_map_initialized == true) && ((flags & COSE_UNPROTECT_ONLY) != 0)) {
+        status = get_map_value_from_buffer(pcose->message_unprotected_map_cbor.buffer, pcose->message_unprotected_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
+        if (status == true)
+            return;
+    }
+       
+    if ((pcose->message_dont_send_map_cbor.buffer != NULL && pcose->message_dont_send_map_cbor.is_map_initialized == true) && ((flags & COSE_DONT_SEND) != 0)) {
+        status = get_map_value_from_buffer(pcose->message_dont_send_map_cbor.buffer, pcose->message_dont_send_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
+        if (status == true)
+            return;
+    }
+
+    return false;
+}
+#endif
 
 cn_cbor * _COSE_map_get_str(COSE * pcose, const char * key, int flags, cose_errback * perror)
 {

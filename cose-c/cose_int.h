@@ -45,6 +45,12 @@ typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
 
 #define UNUSED(x) ((void) (x))
 
+typedef struct message_buffers_ {
+    const uint8_t  *buffer;
+    size_t  buffer_size;
+    bool is_map_initialized;
+}message_buffers_s;
+
 typedef struct _COSE {
 	COSE_INIT_FLAGS m_flags;		//  Not sure what goes here yet
 	int m_ownMsg;		//  Do I own the pointer @ m_cbor?
@@ -56,6 +62,13 @@ typedef struct _COSE {
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
 	cn_cbor * m_dontSendMap;
+#ifdef USE_TINY_CBOR
+    message_buffers_s message_cbor; //m_cbor
+    message_buffers_s message_root_cbor; //m_cborRoot
+    message_buffers_s message_protected_map_cbor; //m_protectedMap
+    message_buffers_s message_unprotected_map_cbor; //m_unprotectMap
+    message_buffers_s message_dont_send_map_cbor; //m_dontSendMap
+#endif
 	const byte * m_pbExternal;
 	size_t m_cbExternal;
 
