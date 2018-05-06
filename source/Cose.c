@@ -559,19 +559,19 @@ bool  _COSE_map_get_int_tiny(COSE * pcose, int key, int flags, uint8_t **out_map
 
         status = get_map_value_from_buffer(pcose->message_protected_map_cbor.buffer, pcose->message_protected_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
         if (status == true)
-            return;
+            return status;
     }
 
     if ((pcose->message_unprotected_map_cbor.buffer != NULL && pcose->message_unprotected_map_cbor.is_map_initialized == true) && ((flags & COSE_UNPROTECT_ONLY) != 0)) {
         status = get_map_value_from_buffer(pcose->message_unprotected_map_cbor.buffer, pcose->message_unprotected_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
         if (status == true)
-            return;
+            return status;
     }
        
     if ((pcose->message_dont_send_map_cbor.buffer != NULL && pcose->message_dont_send_map_cbor.is_map_initialized == true) && ((flags & COSE_DONT_SEND) != 0)) {
         status = get_map_value_from_buffer(pcose->message_dont_send_map_cbor.buffer, pcose->message_dont_send_map_cbor.buffer_size, key, out_map_value, out_map_value_size);
         if (status == true)
-            return;
+            return status;
     }
 
     return false;
