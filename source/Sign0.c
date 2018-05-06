@@ -476,7 +476,6 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 #endif
     size_t cbToSign = 0;
     int bytesWritten = 0;
-    byte * pbToSign = NULL;
     CborError cbor_error = CborNoError;
     CborEncoder encoder;
     CborEncoder array_encoder;
@@ -544,10 +543,9 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 
             encoded_out_buffer_size = cbor_encoder_get_extra_bytes_needed(&encoder);
 
-            encoded_out_buffer = (byte *)COSE_CALLOC(encoded_out_buffer_size, 1, context);
+            encoded_out_buffer = (byte *)COSE_CALLOC(NULL,encoded_out_buffer_size,context);
             CHECK_CONDITION(encoded_out_buffer != NULL, COSE_ERR_OUT_OF_MEMORY);
 
-            encoded_out_buffer = (uint8_t *)malloc(encoded_out_buffer_size);
             iteration_count++;
         }
         else {
@@ -557,12 +555,12 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 
     *ppbToSign = encoded_out_buffer;
     *pcbToSign = encoded_out_buffer_size;
-    pbToSign = NULL;
+    encoded_out_buffer = NULL;
 
     return true;
 
 errorReturn:
-    if (encoded_out_buffer != NULL) CN_CBOR_FREE(encoded_out_buffer);
+    if (encoded_out_buffer != NULL) COSE_FREE(encoded_out_buffer);
     return false;
 }
 #endif
