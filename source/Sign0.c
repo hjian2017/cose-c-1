@@ -543,7 +543,7 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 
             encoded_out_buffer_size = cbor_encoder_get_extra_bytes_needed(&encoder);
 
-            encoded_out_buffer = (byte *)COSE_CALLOC(NULL,encoded_out_buffer_size,context);
+            encoded_out_buffer = (byte *)COSE_CALLOC(1,encoded_out_buffer_size,context);
             CHECK_CONDITION(encoded_out_buffer != NULL, COSE_ERR_OUT_OF_MEMORY);
 
             iteration_count++;
