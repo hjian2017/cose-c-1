@@ -376,6 +376,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		}
 
 		switch (msgType) {
+#ifndef USE_TINY_CBOR
 		case Attributes_MAC_protected:
 			f = COSE_Mac_map_put_int((HCOSE_MAC)hHandle, keyNew, pValueNew, which, NULL);
 			break;
@@ -407,14 +408,18 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		case Attributes_Sign0_protected:
 			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
-
+#else
+        case Attributes_Sign0_protected:
+            f = COSE_Sign0_map_put_int_tiny((HCOSE_SIGN0)hHandle, keyNew,/* pValueNew, */which,  NULL);
+            break;
+#endif
 		}
 		// assert(f);
 	}
 
 	return f;
 }
-
+#ifndef USE_TINY_CBOR
 bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 {
 	bool f = false;
@@ -458,7 +463,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 returnError:
 	return f;
 }
-
+#endif
 bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 {
 	bool f = false;
@@ -470,6 +475,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
 		switch (base) {
+#ifndef USE_TINY_CBOR
 		case Attributes_Encrypt_protected:
 			if (!COSE_Encrypt_SetExternal((HCOSE_ENCRYPT)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
@@ -489,7 +495,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 		case Attributes_Signer_protected:
 			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
-
+#endif
 		case Attributes_Sign0_protected:
 			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
@@ -661,7 +667,7 @@ void RunAlgTest(char *cbor_input_json_string)
     }
 #else
     /*  This group calls functions that checks tiny cbor functionality */
-    else if (cn_cbor_mapget_string(pInput, "sign0_tiny_cbor") != NULL) {
+    if (cn_cbor_mapget_string(pInput, "sign0_tiny_cbor") != NULL) {
         if (ValidateSign0BufferTinyCbor(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSign0Message(pControl);
@@ -772,7 +778,7 @@ TEST(CoseTests, sign_fail_06)
 TEST_GROUP_RUNNER(CoseTests)
 {
 
-
+#ifndef USE_TINY_CBOR
     // Positives
     RUN_TEST_CASE(CoseTests, sign_pass_01);
     RUN_TEST_CASE(CoseTests, sign_pass_02);
@@ -784,7 +790,7 @@ TEST_GROUP_RUNNER(CoseTests)
     RUN_TEST_CASE(CoseTests, sign_fail_04);
     RUN_TEST_CASE(CoseTests, sign_fail_05);
     RUN_TEST_CASE(CoseTests, sign_fail_06);
-#ifdef USE_TINY_CBOR  
+#else 
     //Tests sign_pass_tiny_cbor_01, sign_pass_tiny_cbor_02 and sign_pass_tiny_cbor_03 checks tiny cbor functions
     RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_01);
     RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_02);

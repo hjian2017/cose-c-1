@@ -429,7 +429,7 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 cose CBOR_CONTEXT);
 
 
 #ifdef USE_TINY_CBOR
-
+bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 cose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * errp);
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 /**
 * Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.

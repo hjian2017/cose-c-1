@@ -514,6 +514,43 @@ errorReturn:
 
 
 #ifdef USE_TINY_CBOR
+
+bool _COSE_map_put_tiny(COSE * pCose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * perr)
+{
+    //cn_cbor_errback error;
+    bool f = false;
+    //CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
+
+#if 0
+    CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_protectedMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+    CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_unprotectMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+    CHECK_CONDITION(cn_cbor_mapget_int(pCose->m_dontSendMap, key) == NULL, COSE_ERR_INVALID_PARAMETER);
+
+    switch (flags) {
+    case COSE_PROTECT_ONLY:
+        f = cn_cbor_mapput_int(pCose->m_protectedMap, key, value, CBOR_CONTEXT_PARAM_COMMA &error);
+        break;
+
+    case COSE_UNPROTECT_ONLY:
+        f = cn_cbor_mapput_int(pCose->m_unprotectMap, key, value, CBOR_CONTEXT_PARAM_COMMA &error);
+        break;
+
+    case COSE_DONT_SEND:
+        f = cn_cbor_mapput_int(pCose->m_dontSendMap, key, value, CBOR_CONTEXT_PARAM_COMMA &error);
+        break;
+
+    default:
+        FAIL_CONDITION(COSE_ERR_INVALID_PARAMETER);
+        break;
+    }
+#endif
+    //CHECK_CONDITION(f, _MapFromCBOR(error));
+
+errorReturn:
+    return f;
+}
+
+
 static get_map_value_from_buffer(uint8_t *map_buffer, size_t map_buffer_size, int key, uint8_t **map_value_buffer, size_t *map_value_buffer_size) {
 
     CborValue map;

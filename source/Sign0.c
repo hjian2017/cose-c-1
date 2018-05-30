@@ -62,7 +62,30 @@ bool IsValidSign0Handle(HCOSE_SIGN0 h)
     return _COSE_IsInList(Sign0Root, (COSE *)p);
 }
 
+/*!
+* @brief Set the application external data for authentication
+*
+* Enveloped data objects support the authentication of external application
+* supplied data.  This function is provided to supply that data to the library.
+*
+* The external data is not copied, nor will be it freed when the handle is released.
+*
+* @param hcose  Handle for the COSE Enveloped data object
+* @param pbEternalData  point to the external data
+* @param cbExternalData size of the external data
+* @param perr  location to return errors
+* @return result of the operation.
+*/
 
+bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+{
+    if (!IsValidSign0Handle(hcose)) {
+        if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
+        return false;
+    }
+
+    return _COSE_SetExternal(&((COSE_Sign0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
+}
 
 #ifndef USE_TINY_CBOR
 
@@ -184,30 +207,7 @@ errorReturn:
 	return fRet;
 }
 
-/*!
-* @brief Set the application external data for authentication
-*
-* Enveloped data objects support the authentication of external application
-* supplied data.  This function is provided to supply that data to the library.
-*
-* The external data is not copied, nor will be it freed when the handle is released.
-*
-* @param hcose  Handle for the COSE Enveloped data object
-* @param pbEternalData  point to the external data
-* @param cbExternalData size of the external data
-* @param perr  location to return errors
-* @return result of the operation.
-*/
 
-bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
-{
-	if (!IsValidSign0Handle(hcose)) {
-		if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
-		return false;
-	}
-
-	return _COSE_SetExternal(&((COSE_Sign0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
-}
 
 bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 {
@@ -503,6 +503,18 @@ errorReturn:
 
 #else
 
+
+
+bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 h, int key,/* cn_cbor * value,*/ int flags,  cose_errback * perr)
+{
+    CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+    //CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
+
+    return _COSE_map_put_tiny(&((COSE_Sign0Message *)h)->m_message, key, /*value, */flags,  perr);
+
+errorReturn:
+    return false;
+}
 bool COSE_Sign0_Free(HCOSE_SIGN0 h)
 {
     COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
