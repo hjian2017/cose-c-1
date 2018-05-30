@@ -289,7 +289,7 @@ errorReturn:
 }
 #endif
 
-
+#ifndef USE_TINY_CBOR
 bool ECDSA_Sign(COSE * pSigner, int index, const cn_cbor * pKey, int cbitDigest, const byte * rgbToSign, size_t cbToSign, cose_errback * perr)
 {
     assert(true);
@@ -384,3 +384,4 @@ void rand_bytes(byte * pb, size_t cb)
 {
     assert(true);
 }
+#endif

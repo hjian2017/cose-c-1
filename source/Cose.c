@@ -780,10 +780,12 @@ void _COSE_Release(COSE * pobj CBOR_CONTEXT)
     //cbor_context *cbor_context = &pobj->m_allocContext;
 #endif
 
+#ifndef USE_TINY_CBOR
     if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap);
     if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap);
     if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap);
     if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot);
+#endif
 }
 
 

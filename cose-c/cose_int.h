@@ -59,12 +59,13 @@ typedef struct _COSE {
 	int m_ownUnprotectedMap; //  Do I own the pointer @ m_unportectedMap?
 	int m_msgType;		//  What message type is this?
 	int m_refCount;			//  Allocator Reference Counting.
+#ifndef USE_TINY_CBOR
 	cn_cbor * m_cbor;
 	cn_cbor * m_cborRoot;
 	cn_cbor * m_protectedMap;
 	cn_cbor * m_unprotectMap;
 	cn_cbor * m_dontSendMap;
-#ifdef USE_TINY_CBOR
+#else
     message_buffers_s message_cbor; //m_cbor
     message_buffers_s message_root_cbor; //m_cborRoot
     message_buffers_s message_protected_map_cbor; //m_protectedMap
@@ -106,7 +107,7 @@ struct _SignerInfo {
 	const cn_cbor * m_pkey;
 	COSE_SignerInfo * m_signerNext;
 };
-
+#ifndef USE_TINY_CBOR
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
 
@@ -152,7 +153,10 @@ typedef struct _COSE_COUNTER_SIGN {
 	COSE_CounterSign * m_next;
 } COSE_CounterSign;
 #endif
+#endif
 
+
+#ifndef USE_TINY_CBOR
 #ifdef USE_COSE_CONTEXT
 
 /**
@@ -217,6 +221,15 @@ typedef struct _COSE_COUNTER_SIGN {
 
 
 #endif // USE_CBOR_CONTEXT
+#endif //USE_TINY_CBOR
+
+
+
+
+
+#define COSE_CALLOC(count, size, ctx) calloc(count, size)
+#define COSE_FREE(ptr) free(ptr)
+
 
 #ifndef UNUSED_PARAM
 #define UNUSED_PARAM(p) ((void)&(p))
