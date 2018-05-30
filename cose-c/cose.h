@@ -31,8 +31,9 @@
 #ifndef __COSE_H__
 #define __COSE_H__
 
+#ifndef USE_TINY_CBOR
 #include "cn-cbor.h"
-#ifdef USE_TINY_CBOR
+#else
 #include "tinycbor.h"
 #endif
 #include "configure.h"
@@ -91,6 +92,7 @@ typedef enum {
 typedef struct _cose_errback {
 	/** The error, or CN_CBOR_NO_ERROR if none */
 	cose_error err;
+
 } cose_errback;
 
 typedef enum {
@@ -384,7 +386,7 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
  */
 
 HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
-bool COSE_Sign0_Free(HCOSE_SIGN0 cose CBOR_CONTEXT);
+
 
 bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
 bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
@@ -420,11 +422,15 @@ extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_e
 extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
 extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
+bool COSE_Sign0_Free(HCOSE_SIGN0 cose CBOR_CONTEXT);
 #endif
+
+
 
 
 #ifdef USE_TINY_CBOR
 
+bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 /**
 * Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
 *

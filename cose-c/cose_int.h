@@ -101,13 +101,13 @@ typedef struct {
 typedef struct {
 	COSE m_message;	    // The message object
 } COSE_Sign0Message;
-
+#ifndef USE_TINY_CBOR
 struct _SignerInfo {
 	COSE m_message;
 	const cn_cbor * m_pkey;
 	COSE_SignerInfo * m_signerNext;
 };
-#ifndef USE_TINY_CBOR
+
 struct _RecipientInfo;
 typedef struct _RecipientInfo COSE_RecipientInfo;
 
@@ -235,7 +235,12 @@ typedef struct _COSE_COUNTER_SIGN {
 #define UNUSED_PARAM(p) ((void)&(p))
 #endif
 
+
+#ifndef USE_TINY_CBOR
 extern cose_error _MapFromCBOR(cn_cbor_errback err);
+#else
+extern cose_error _MapFromCBOR(CborError err);
+#endif
 
 /*
  *  Set of routines for handle checking

@@ -63,6 +63,10 @@ bool IsValidSign0Handle(HCOSE_SIGN0 h)
 }
 
 
+
+#ifndef USE_TINY_CBOR
+
+
 bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
 {
 #ifdef USE_CBOR_CONTEXT
@@ -79,20 +83,17 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
     }
 
     _COSE_RemoveFromList(&Sign0Root, &pMessage->m_message);
-#ifndef USE_TINY_CBOR
+
 #ifdef USE_CBOR_CONTEXT
     context = pMessage->m_message.m_allocContext;
 #endif
 
     _COSE_Sign0_Release(pMessage CBOR_CONTEXT_PARAM);
-#endif
 
     COSE_FREE(pMessage);
 
     return true;
 }
-
-#ifndef USE_TINY_CBOR
 bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor *pKey, cose_errback * perr);
 bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
 void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT);
@@ -502,6 +503,24 @@ errorReturn:
 
 #else
 
+bool COSE_Sign0_Free(HCOSE_SIGN0 h)
+{
+    COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+
+    if (!IsValidSign0Handle(h)) return false;
+
+    //  Check reference counting
+    if (pMessage->m_message.m_refCount > 1) {
+        pMessage->m_message.m_refCount--;
+        return true;
+    }
+
+    _COSE_RemoveFromList(&Sign0Root, &pMessage->m_message);
+
+    COSE_FREE(pMessage);
+
+    return true;
+}
 bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
 
 /** Validates a COSE based on the pKey.
@@ -677,16 +696,9 @@ bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, si
 {
     byte * pbToSign = NULL;
     int alg;
-    const cn_cbor * cn = NULL;
-#ifdef USE_CBOR_CONTEXT
-    cn_cbor_context * context = NULL;
-#endif
     size_t cbToSign;
     bool fRet = false;
-
     CborError cbor_err = CborNoError;
-
-
     uint8_t *cbor_key_value = NULL;
     size_t cbor_key_value_size = 0;
     CborValue value;

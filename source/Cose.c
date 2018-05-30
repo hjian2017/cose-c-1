@@ -35,10 +35,11 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifndef USE_TINY_CBOR
 #include "cn-cbor.h"
 
 
-#ifndef USE_TINY_CBOR
+
 bool IsValidCOSEHandle(HCOSE h)
 {
     COSE_Encrypt * p = (COSE_Encrypt *)h;
@@ -541,10 +542,9 @@ static get_map_value_from_buffer(uint8_t *map_buffer, size_t map_buffer_size, in
 }
 bool _COSE_Init_From_Object_tiny(COSE* pobj, const uint8_t *coseBuffer, size_t coseBufferSize, cose_errback * perr)
 {
-    const cn_cbor * pmap = NULL;
+
     uint8_t *map_buffer = NULL;
     size_t map_buffer_size = 0;
-    cn_cbor_errback errState; // = { 0 };
     CborValue value;
     CborValue value_container;
     CborValue array_element;
@@ -750,8 +750,7 @@ HCOSE COSE_Init_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, int * pty
 
 HCOSE COSE_Decode_tiny(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, cose_errback * perr)
 {
-    cn_cbor * cose = NULL;
-    cn_cbor_errback cbor_err;
+
     HCOSE h;
 
     CHECK_CONDITION((rgbData != NULL) && (ptype != NULL), COSE_ERR_INVALID_PARAMETER);
@@ -762,7 +761,6 @@ HCOSE COSE_Decode_tiny(const byte * rgbData, size_t cbData, int * ptype, COSE_ob
     return h;
 
 errorReturn:
-    cn_cbor_free(cose CBOR_CONTEXT_PARAM);
     return NULL;
 }
 
@@ -772,7 +770,7 @@ errorReturn:
 
 
 
-
+#ifndef USE_TINY_CBOR
 //pr
 void _COSE_Release(COSE * pobj CBOR_CONTEXT)
 {
@@ -780,14 +778,14 @@ void _COSE_Release(COSE * pobj CBOR_CONTEXT)
     //cbor_context *cbor_context = &pobj->m_allocContext;
 #endif
 
-#ifndef USE_TINY_CBOR
+
     if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap);
     if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap);
     if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap);
     if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot);
-#endif
-}
 
+}
+#endif
 
 //common
 bool _COSE_SetExternal(COSE * pcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
@@ -844,26 +842,35 @@ void _COSE_RemoveFromList(COSE ** root, COSE * thisMsg)
     return;
 }
 
+#ifndef USE_TINY_CBOR
 cose_error _MapFromCBOR(cn_cbor_errback err)
 {
     switch (err.err) {
-#ifndef USE_TINY_CBOR
     case CN_CBOR_ERR_INVALID_PARAMETER:
         return COSE_ERR_INVALID_PARAMETER;
 
     case CN_CBOR_ERR_OUT_OF_MEMORY:
         return COSE_ERR_OUT_OF_MEMORY;
 
+    default:
+        return COSE_ERR_CBOR;
+    }
+}
 
 #else
+
+cose_error _MapFromCBOR(CborError err)
+{
+    switch (err) {
+
     case CborErrorIO:
         return COSE_ERR_INVALID_PARAMETER;
 
     case CborErrorOutOfMemory:
         return COSE_ERR_OUT_OF_MEMORY;
 
-#endif
     default:
         return COSE_ERR_CBOR;
     }
 }
+#endif
