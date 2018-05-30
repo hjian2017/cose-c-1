@@ -617,6 +617,7 @@ void RunAlgTest(char *cbor_input_json_string)
 
     const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
 
+#ifndef USE_TINY_CBOR
     if ((pInput == NULL) || (pInput->type != CN_CBOR_MAP)) {
         fprintf(stderr, "No or bad input section");
         exit(1);
@@ -627,42 +628,46 @@ void RunAlgTest(char *cbor_input_json_string)
             //FIXME: yet implemented by porting layer
             //BuildMacMessage(pControl);
         }
-    } else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
+    }
+    else if (cn_cbor_mapget_string(pInput, "mac0") != NULL) {
         if (ValidateMac0(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildMac0Message(pControl);
         }
-    } else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
+    }
+    else if (cn_cbor_mapget_string(pInput, "enveloped") != NULL) {
         if (ValidateEnveloped(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildEnvelopedMessage(pControl);
         }
-    } else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
+    }
+    else if (cn_cbor_mapget_string(pInput, "sign") != NULL) {
         if (ValidateSigned(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSignedMessage(pControl);
         }
-    } else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
+    }
+    else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
         if (ValidateSign0(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSign0Message(pControl);
         }
-#ifdef USE_TINY_CBOR
     }
+    else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
+        if (ValidateEncrypt(pControl CBOR_CONTEXT_PARAM)) {
+            //FIXME: yet implemented by porting layer
+            //BuildEncryptMessage(pControl);
+        }
+    }
+#else
     /*  This group calls functions that checks tiny cbor functionality */
     else if (cn_cbor_mapget_string(pInput, "sign0_tiny_cbor") != NULL) {
         if (ValidateSign0BufferTinyCbor(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
             //BuildSign0Message(pControl);
         }
-#endif
-    } else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
-        if (ValidateEncrypt(pControl CBOR_CONTEXT_PARAM)) {
-            //FIXME: yet implemented by porting layer
-            //BuildEncryptMessage(pControl);
-        }
     }
-
+#endif
     return;
 }
 
@@ -766,16 +771,12 @@ TEST(CoseTests, sign_fail_06)
 
 TEST_GROUP_RUNNER(CoseTests)
 {
+
+
     // Positives
     RUN_TEST_CASE(CoseTests, sign_pass_01);
     RUN_TEST_CASE(CoseTests, sign_pass_02);
     RUN_TEST_CASE(CoseTests, sign_pass_03);
-#ifdef USE_TINY_CBOR
-    //Tests sign_pass_tiny_cbor_01, sign_pass_tiny_cbor_02 and sign_pass_tiny_cbor_03 checks tiny cbor functions
-    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_01);
-    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_02);
-    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_03);
-#endif    
     // Negatives
     RUN_TEST_CASE(CoseTests, sign_fail_01);
     RUN_TEST_CASE(CoseTests, sign_fail_02);
@@ -783,6 +784,13 @@ TEST_GROUP_RUNNER(CoseTests)
     RUN_TEST_CASE(CoseTests, sign_fail_04);
     RUN_TEST_CASE(CoseTests, sign_fail_05);
     RUN_TEST_CASE(CoseTests, sign_fail_06);
+#ifdef USE_TINY_CBOR  
+    //Tests sign_pass_tiny_cbor_01, sign_pass_tiny_cbor_02 and sign_pass_tiny_cbor_03 checks tiny cbor functions
+    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_01);
+    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_02);
+    RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_03);
+
+#endif
 }
 
 
