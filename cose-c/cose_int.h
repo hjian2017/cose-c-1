@@ -38,9 +38,11 @@
 
 #include "mbed_trace.h"
 
+#ifndef USE_TINY_CBOR
 #ifdef USE_COUNTER_SIGNATURES
 struct _COSE_COUNTER_SIGN;
 typedef struct _COSE_COUNTER_SIGN COSE_CounterSign;
+#endif
 #endif
 
 #define UNUSED(x) ((void) (x))
@@ -72,13 +74,18 @@ typedef struct _COSE {
 	const byte * m_pbExternal;
 	size_t m_cbExternal;
 
+#ifndef USE_TINY_CBOR
     //FIXME: Should be USE_COSE_CONTEXT? used by COSE_CALLOC which does not allocate a cn_cbor
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context m_allocContext;
 #endif
+#endif
 	struct _COSE * m_handleList;
+
+#ifndef USE_TINY_CBOR
 #ifdef USE_COUNTER_SIGNATURES
 	COSE_CounterSign * m_counterSigners;
+#endif
 #endif
 } COSE;
 
@@ -225,14 +232,17 @@ extern void _COSE_InsertInList(COSE ** rootNode, COSE * newMsg);
 extern bool _COSE_IsInList(COSE * rootNode, COSE * thisMsg);
 extern void _COSE_RemoveFromList(COSE ** rootNode, COSE * thisMsg);
 
+#ifndef USE_TINY_CBOR
 extern bool IsValidEncryptHandle(HCOSE_ENCRYPT h);
 extern bool IsValidEnvelopedHandle(HCOSE_ENVELOPED h);
 extern bool IsValidRecipientHandle(HCOSE_RECIPIENT h);
 extern bool IsValidSignerHandle(HCOSE_SIGNER h);
 extern bool IsValidCounterSignHandle(HCOSE_COUNTERSIGN h);
 
+
 extern bool _COSE_Init(COSE_INIT_FLAGS flags, COSE * pcose, int msgType, CBOR_CONTEXT_COMMA cose_errback * errp);
 extern bool _COSE_Init_From_Object(COSE* pobj, cn_cbor * pcbor, CBOR_CONTEXT_COMMA cose_errback * perror);
+
 extern void _COSE_Release(COSE * pcose CBOR_CONTEXT);
 
 extern cn_cbor * _COSE_map_get_string(COSE * cose, const char * key, int flags, cose_errback * errp);
@@ -293,7 +303,7 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p CBOR_CONTEXT);
 extern HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE * pMessage, int iSigner, cose_errback * perr);
 extern bool _COSE_CounterSign_add(COSE * pMessage, HCOSE_COUNTERSIGN hSigner, cose_errback * perr);
 extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COMMA cose_errback * perr);
-
+#endif
 //
 //  Debugging Items
 
@@ -312,9 +322,9 @@ extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONT
 		goto errorReturn;\
 	}\
 }
-
+#ifndef USE_TINY_CBOR
 extern cn_cbor * _COSE_encode_protected(COSE * pMessage, CBOR_CONTEXT_COMMA cose_errback * perr);
-
+#endif
 
 //// Defines on positions
 
@@ -337,7 +347,7 @@ extern cn_cbor * _COSE_encode_protected(COSE * pMessage, CBOR_CONTEXT_COMMA cose
 #define COSE_Header_Signature 94
 #define COSE_Header_Signers 93
 
-
+#ifndef USE_TINY_CBOR
 bool _COSE_array_replace(COSE * pMessage, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 cn_cbor * _COSE_arrayget_int(COSE * pMessage, int index);
 
@@ -347,7 +357,7 @@ bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CB
 cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 
 extern size_t cn_cbor_encode_size(cn_cbor * object);
-
+#endif
 enum {
 	COSE_Int_Alg_AES_CBC_MAC_256_64 = -22
 };

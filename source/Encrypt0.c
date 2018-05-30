@@ -42,6 +42,7 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifndef USE_TINY_CBOR
 void _COSE_Encrypt_Release(COSE_Encrypt * p  CBOR_CONTEXT);
 
 COSE * EncryptRoot = NULL;
@@ -233,3 +234,4 @@ bool COSE_Encrypt_map_put_int(HCOSE_ENCRYPT h, int key, cn_cbor * value, int fla
 
 	return _COSE_map_put(&((COSE_Encrypt *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perror);
 }
+#endif

@@ -36,6 +36,7 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifndef USE_TINY_CBOR
 extern bool BuildContextBytes(COSE * pcose, int algID, size_t cbitKey, byte ** ppbContext, size_t * pcbContext, CBOR_CONTEXT_COMMA cose_errback * perr);
 
 
@@ -1437,3 +1438,4 @@ bool COSE_Recipient_AddRecipient(HCOSE_RECIPIENT hEnc, HCOSE_RECIPIENT hRecip, C
 errorReturn:
 	return false;
 }
+#endif

@@ -347,7 +347,7 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
     if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
 
-    hSig = (HCOSE_SIGN0)COSE_Decode_tiny(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+    hSig = (HCOSE_SIGN0)COSE_Decode_tiny(pbEncoded, cbEncoded, &type, COSE_sign0_object, NULL);
     if (hSig == NULL) {
         if (fFailBody) return 0; else goto returnError;
     }

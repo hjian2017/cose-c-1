@@ -43,6 +43,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+
+#ifndef USE_TINY_CBOR
 COSE * MacRoot = NULL;
 
 /*! \private
@@ -773,3 +775,4 @@ HCOSE_RECIPIENT COSE_Mac_GetRecipient(HCOSE_MAC cose, int iRecipient, cose_errba
 errorReturn:
 	return NULL;
 }
+#endif

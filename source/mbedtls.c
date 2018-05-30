@@ -38,6 +38,7 @@
 #include "ecdsa.h"
 #include "ecp.h"
 
+#ifndef USE_TINY_CBOR
 
 bool GetECKeyFromCoseKeyObj(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr)
 {
@@ -189,7 +190,8 @@ errorReturn:
     return true; // success
 }
 
-#ifdef USE_TINY_CBOR
+#else
+
 bool ECDSA_Verify_tiny(
     COSE *pSigner,
     int index,
