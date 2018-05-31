@@ -37,6 +37,8 @@
 #include "cose.h"
 #include "cose_int.h"
 
+
+#ifndef USE_TINY_CBOR
 COSE * SignRoot = NULL;
 
 /*! \private
@@ -362,5 +364,5 @@ HCOSE_SIGNER COSE_Sign_GetSigner(HCOSE_SIGN cose, int iSigner, cose_errback * pe
 
 	return (HCOSE_SIGNER)p;
 }
-
+#endif
 

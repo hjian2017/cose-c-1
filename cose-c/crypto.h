@@ -39,7 +39,7 @@
 // groupSizeBytes is always the size of the key / 2.
 // keySize has an extra byte containing compression type, so the actual key size is keySize - 1
 #define EC_GROUP_SIZE(keySize) ((keySize - 1) / 2)
-
+#ifndef USE_TINY_CBOR
 /**
 * Perform an AES-CCM Decryption operation
 *
@@ -115,6 +115,6 @@ bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pK
 * @return                  none
 */
 void rand_bytes(byte * pb, size_t cb);
-
+#endif
 #endif
 

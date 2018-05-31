@@ -14,7 +14,7 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4127)
 #endif
-
+#ifndef USE_TINY_CBOR
 bool DecryptMessage(const byte * pbEncoded, size_t cbEncoded, bool fFailBody, const cn_cbor * pEnveloped, const cn_cbor * pRecipient1, int iRecipient1, const cn_cbor * pRecipient2, int iRecipient2 CBOR_CONTEXT)
 {
 	HCOSE_ENVELOPED hEnc = NULL;
@@ -724,3 +724,4 @@ void Recipient_Corners(CBOR_CONTEXT_NO_COMMA)
 	COSE_Enveloped_Free(hEnv CBOR_CONTEXT_PARAM);
 	COSE_Recipient_Free(hRecip CBOR_CONTEXT_PARAM);
 }
+#endif

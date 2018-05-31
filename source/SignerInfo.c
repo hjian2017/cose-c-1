@@ -40,7 +40,10 @@
 #include "configure.h"
 #include "crypto.h"
 
+
+#ifndef USE_TINY_CBOR
 extern bool IsValidSignHandle(HCOSE_SIGN h);
+
 
 COSE * SignerRoot = NULL;
 
@@ -407,3 +410,4 @@ bool COSE_Signer_map_put_int(HCOSE_SIGNER h, int key, cn_cbor * value, int flags
 errorReturn:
 	return fRet;
 }
+#endif

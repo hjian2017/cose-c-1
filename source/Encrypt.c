@@ -42,6 +42,7 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifndef USE_TINY_CBOR
 void _COSE_Enveloped_Release(COSE_Enveloped * p CBOR_CONTEXT);
 
 COSE * EnvelopedRoot = NULL;
@@ -892,4 +893,5 @@ HCOSE_COUNTERSIGN COSE_Enveloped_GetCounterSigner(HCOSE_ENCRYPT h, int iSigner, 
 errorReturn:
 	return NULL;
 }
+#endif
 #endif

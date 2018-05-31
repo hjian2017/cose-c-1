@@ -43,6 +43,8 @@
 #include "configure.h"
 #include "crypto.h"
 
+#ifndef USE_TINY_CBOR
+
 COSE * Mac0Root = NULL;
 
 /*! \private
@@ -243,3 +245,4 @@ bool COSE_Mac0_validate(HCOSE_MAC0 h, const byte * pbKey, size_t cbKey, cose_err
 errorReturn:
 	return false;
 }
+#endif

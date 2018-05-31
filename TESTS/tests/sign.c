@@ -14,7 +14,7 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4127)
 #endif
-
+#ifndef USE_TINY_CBOR
 int _ValidateSigned(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -316,7 +316,7 @@ returnError:
 	return 0;
 }
 
-
+#endif
 
 #ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
@@ -347,7 +347,7 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
     if ((pSign == NULL) || (pSign->type != CN_CBOR_MAP)) goto returnError;
 
 
-    hSig = (HCOSE_SIGN0)COSE_Decode_tiny(pbEncoded, cbEncoded, &type, COSE_sign0_object, CBOR_CONTEXT_PARAM_COMMA NULL);
+    hSig = (HCOSE_SIGN0)COSE_Decode_tiny(pbEncoded, cbEncoded, &type, COSE_sign0_object, NULL);
     if (hSig == NULL) {
         if (fFailBody) return 0; else goto returnError;
     }
@@ -423,6 +423,7 @@ int ValidateSign0BufferTinyCbor(const cn_cbor * pControl CBOR_CONTEXT)
     return _ValidateSign0_with_buffer(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
 #endif
+#ifndef USE_TINY_CBOR
 int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	//
@@ -651,3 +652,4 @@ void Sign0_Corners(CBOR_CONTEXT_NO_COMMA)
 
 	return;
 }
+#endif

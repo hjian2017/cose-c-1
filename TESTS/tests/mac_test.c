@@ -13,7 +13,7 @@
 #pragma warning (disable: 4127)
 #endif
 
-
+#ifndef USE_TINY_CBOR
 int _ValidateMAC(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
 	const cn_cbor * pInput = cn_cbor_mapget_string(pControl, "input");
@@ -525,3 +525,4 @@ void MAC0_Corners(CBOR_CONTEXT_NO_COMMA)
 
 	return;
 }
+#endif
