@@ -40,6 +40,8 @@
 
 COSE * Sign0Root = NULL;
 
+//Common functions (tinycbor and cn-cbor
+
 /*! \private
 * @brief Test if a HCOSE_SIGN0 handle is valid
 *
@@ -87,8 +89,8 @@ bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size
     return _COSE_SetExternal(&((COSE_Sign0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
 }
 
-#ifndef USE_TINY_CBOR
 
+#ifndef USE_TINY_CBOR
 
 bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
 {
@@ -501,10 +503,11 @@ errorReturn:
 	return fRet;
 }
 
-#else
+#else  //USE_TINY_CBOR
+//Sets maps values to COSE context according to flags and value
 
-
-
+//TODO : Currently this function ised only inside of tests. For now - This function should be implemented for tiny cbor or removed to test function as is.
+// In case we will need to use this function as cose core function - shoulb be implemented for tiny cbor.
 bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 h, int key,/* cn_cbor * value,*/ int flags,  cose_errback * perr)
 {
     CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
@@ -515,6 +518,7 @@ bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 h, int key,/* cn_cbor * value,*/ in
 errorReturn:
     return false;
 }
+//Free allocated resources
 bool COSE_Sign0_Free(HCOSE_SIGN0 h)
 {
     COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;

@@ -423,13 +423,12 @@ extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA
 extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose CBOR_CONTEXT);
-#endif
 
+#else  //USE_TINY_CBOR
 
-
-
-#ifdef USE_TINY_CBOR
+//Set context's maps
 bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 cose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * errp);
+//Free allocated resources for Sign0
 bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 /**
 * Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
@@ -463,7 +462,6 @@ bool COSE_Sign0_validate_with_raw_pk_tiny(HCOSE_SIGN0 hSign, const byte * pKey, 
 /*  This function uses tiny cbor functionality */
 bool GetECKeyFromCoseBuffer(const uint8_t *coseEncBuffer, size_t coseEncBufferSize, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr);
 #endif
-
 
 
 #ifdef __cplusplus

@@ -487,33 +487,19 @@ errorReturn:
 
 #endif
 
-
+void _COSE_Release(COSE * pobj CBOR_CONTEXT)
+{
+#ifdef USE_CBOR_CONTEXT
+    //cbor_context *cbor_context = &pobj->m_allocContext;
 #endif
 
+    if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap);
+    if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap);
+    if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap);
+    if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#ifdef USE_TINY_CBOR
+}
+#else //USE_TINY_CBOR
 
 bool _COSE_map_put_tiny(COSE * pCose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * perr)
 {
@@ -805,24 +791,6 @@ errorReturn:
 
 
 
-
-
-#ifndef USE_TINY_CBOR
-//pr
-void _COSE_Release(COSE * pobj CBOR_CONTEXT)
-{
-#ifdef USE_CBOR_CONTEXT
-    //cbor_context *cbor_context = &pobj->m_allocContext;
-#endif
-
-
-    if (pobj->m_protectedMap != NULL) CN_CBOR_FREE(pobj->m_protectedMap);
-    if (pobj->m_ownUnprotectedMap && (pobj->m_unprotectMap != NULL)) CN_CBOR_FREE(pobj->m_unprotectMap);
-    if (pobj->m_dontSendMap != NULL) CN_CBOR_FREE(pobj->m_dontSendMap);
-    if (pobj->m_ownMsg && (pobj->m_cborRoot != NULL) && (pobj->m_cborRoot->parent == NULL)) CN_CBOR_FREE(pobj->m_cborRoot);
-
-}
-#endif
 
 //common
 bool _COSE_SetExternal(COSE * pcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)

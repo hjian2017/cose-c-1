@@ -101,6 +101,8 @@ typedef struct {
 typedef struct {
 	COSE m_message;	    // The message object
 } COSE_Sign0Message;
+
+
 #ifndef USE_TINY_CBOR
 struct _SignerInfo {
 	COSE m_message;
@@ -153,11 +155,9 @@ typedef struct _COSE_COUNTER_SIGN {
 	COSE_CounterSign * m_next;
 } COSE_CounterSign;
 #endif
-#endif
 
-
-#ifndef USE_TINY_CBOR
 #ifdef USE_COSE_CONTEXT
+/*****************************/
 
 /**
 *  Allocate space required
@@ -182,54 +182,22 @@ typedef struct _COSE_COUNTER_SIGN {
     free((ptr))
 
 #define COSE_FREE(ptr) COSE_FREE_CONTEXT(ptr, cose_allocation_context)
-
-#else
+#else // NOT USE_COSE_CONTEX
 #define COSE_CALLOC(count, size, ctx) calloc(count, size)
 #define COSE_FREE(ptr) free(ptr)
-#endif
+
+/*****************************/
+#endif //endof USE_COSE_CONTEXT
+
 
 #define CN_CBOR_FREE(p) cn_cbor_free(p CBOR_CONTEXT_PARAM)
 
-#ifdef USE_CBOR_CONTEXT
-/**
-* Allocate enough space for 1 `cn_cbor` structure.
-*
-* @param[in]  ctx  The allocation context, or NULL for calloc.
-* @return          A pointer to a `cn_cbor` or NULL on failure
-*/
-/*
-#define CN_CALLOC(ctx) ((ctx) && (ctx)->calloc_func) ? \
-    (ctx)->calloc_func(1, sizeof(cn_cbor), (ctx)->context) : \
-    calloc(1, sizeof(cn_cbor));
-
-*/
-
-
-//#define CBOR_CONTEXT_PARAM , context
-//#define CBOR_CONTEXT_PARAM_COMMA context ,
-//#define CN_CALLOC_CONTEXT() CN_CALLOC(context)
-
-
-
-
-#else
-
-//#define CBOR_CONTEXT_PARAM
-//#define CBOR_CONTEXT_PARAM_COMMA
-//#define CN_CALLOC_CONTEXT() CN_CALLOC
-
-
-
-#endif // USE_CBOR_CONTEXT
-#endif //USE_TINY_CBOR
-
-
-
-
-
+#else // USE_TINY_CBOR
 #define COSE_CALLOC(count, size, ctx) calloc(count, size)
 #define COSE_FREE(ptr) free(ptr)
 
+/***************************************************************************************/
+#endif//end of ifndef USE_TINY_CBOR
 
 #ifndef UNUSED_PARAM
 #define UNUSED_PARAM(p) ((void)&(p))
