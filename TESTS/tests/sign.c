@@ -375,6 +375,7 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
 
    /* Get algorithm buffer */
     bool status  = COSE_Sign0_map_get_int_tiny(hSig, COSE_Header_Algorithm, COSE_BOTH, &cbor_alg_value, &cbor_alg_value_size, NULL);
+    if ((status == false)) goto returnError;
     if (!IsAlgorithmSupported_tiny(cbor_alg_value, cbor_alg_value_size)) fNoAlgSupport = true;
 
     pFail = cn_cbor_mapget_string(pInput, "fail");
