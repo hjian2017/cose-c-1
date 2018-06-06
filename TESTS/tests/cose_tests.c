@@ -18,6 +18,7 @@
 #include <string.h>
 #include "cose.h"
 #include "cn-cbor.h"
+#include "tinycbor.h"
 #include <assert.h>
 #include "json.h"
 #include "cose_tests.h"
@@ -130,140 +131,166 @@ byte * FromHex(const char * rgch, int cch)
 
 	return pb;
 }
+static bool check_algorithm(int alg_value) {
 
-int IsAlgorithmSupported(const cn_cbor * alg)
+    switch (alg_value)
+    {
+    default:
+        return false;
+
+#ifdef USE_AES_CBC_MAC_128_64
+    case COSE_Algorithm_CBC_MAC_128_64:
+#endif
+#ifdef USE_AES_CBC_MAC_128_128
+    case COSE_Algorithm_CBC_MAC_128_128:
+#endif
+#ifdef USE_AES_CBC_MAC_256_64
+    case COSE_Algorithm_CBC_MAC_256_64:
+#endif
+#ifdef USE_AES_CBC_MAC_256_128
+    case COSE_Algorithm_CBC_MAC_256_128:
+#endif
+#ifdef USE_AES_CCM_16_64_128
+    case COSE_Algorithm_AES_CCM_16_64_128:
+#endif
+#ifdef USE_AES_CCM_16_64_256
+    case COSE_Algorithm_AES_CCM_16_64_256:
+#endif
+#ifdef USE_AES_CCM_64_64_128
+    case COSE_Algorithm_AES_CCM_64_64_128:
+#endif
+#ifdef USE_AES_CCM_64_64_256
+    case COSE_Algorithm_AES_CCM_64_64_256:
+#endif
+#ifdef USE_AES_CCM_16_128_128
+    case COSE_Algorithm_AES_CCM_16_128_128:
+#endif
+#ifdef USE_AES_CCM_16_128_256
+    case COSE_Algorithm_AES_CCM_16_128_256:
+#endif
+#ifdef USE_AES_CCM_64_128_128
+    case COSE_Algorithm_AES_CCM_64_128_128:
+#endif
+#ifdef USE_AES_CCM_64_128_256
+    case COSE_Algorithm_AES_CCM_64_128_256:
+#endif
+#ifdef USE_AES_GCM_128
+    case COSE_Algorithm_AES_GCM_128:
+#endif
+#ifdef USE_AES_GCM_192
+    case COSE_Algorithm_AES_GCM_192:
+#endif
+#ifdef USE_AES_GCM_256
+    case COSE_Algorithm_AES_GCM_256:
+#endif
+#ifdef USE_AES_KW_128
+    case COSE_Algorithm_AES_KW_128:
+#endif
+#ifdef USE_AES_KW_192
+    case COSE_Algorithm_AES_KW_192:
+#endif
+#ifdef USE_AES_KW_256
+    case COSE_Algorithm_AES_KW_256:
+#endif
+#ifdef USE_Direct_HKDF_AES_128
+    case COSE_Algorithm_Direct_HKDF_AES_128:
+#endif
+#ifdef USE_Direct_HKDF_AES_256
+    case COSE_Algorithm_Direct_HKDF_AES_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_256
+    case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
+#endif
+#ifdef USE_Direct_HKDF_HMAC_SHA_512
+    case COSE_Algorithm_Direct_HKDF_HMAC_SHA_512:
+#endif
+#ifdef USE_ECDH_ES_A128KW
+    case COSE_Algorithm_ECDH_ES_A128KW:
+#endif
+#ifdef USE_ECDH_ES_A192KW
+    case COSE_Algorithm_ECDH_ES_A192KW:
+#endif
+#ifdef USE_ECDH_ES_A256KW
+    case COSE_Algorithm_ECDH_ES_A256KW:
+#endif
+#ifdef USE_ECDH_ES_HKDF_256
+    case COSE_Algorithm_ECDH_ES_HKDF_256:
+#endif
+#ifdef USE_ECDH_ES_HKDF_512
+    case COSE_Algorithm_ECDH_ES_HKDF_512:
+#endif
+#ifdef USE_ECDH_SS_A128KW
+    case COSE_Algorithm_ECDH_SS_A128KW:
+#endif
+#ifdef USE_ECDH_SS_A192KW
+    case COSE_Algorithm_ECDH_SS_A192KW:
+#endif
+#ifdef USE_ECDH_SS_A256KW
+    case COSE_Algorithm_ECDH_SS_A256KW:
+#endif
+#ifdef USE_ECDH_SS_HKDF_256
+    case COSE_Algorithm_ECDH_SS_HKDF_256:
+#endif
+#ifdef USE_ECDH_SS_HKDF_512
+    case COSE_Algorithm_ECDH_SS_HKDF_512:
+#endif
+#ifdef USE_ECDSA_SHA_256
+    case COSE_Algorithm_ECDSA_SHA_256:
+#endif
+#ifdef USE_ECDSA_SHA_384
+    case COSE_Algorithm_ECDSA_SHA_384:
+#endif
+#ifdef USE_ECDSA_SHA_512
+    case COSE_Algorithm_ECDSA_SHA_512:
+#endif
+#ifdef USE_HMAC_256_64
+    case COSE_Algorithm_HMAC_256_64:
+#endif
+#ifdef USE_HMAC_256_256
+    case COSE_Algorithm_HMAC_256_256:
+#endif
+#ifdef USE_HMAC_384_384
+    case COSE_Algorithm_HMAC_384_384:
+#endif
+#ifdef USE_HMAC_512_512
+    case COSE_Algorithm_HMAC_512_512:
+#endif
+    case COSE_Algorithm_Direct:
+    case -999: // Unsupported algorithm for testing.
+        return true;
+    }
+    return true;
+}
+bool IsAlgorithmSupported(const cn_cbor * alg)
 {
 	//  Pretend we support any algorithm which is not an integer - this is a fail test case
 
-	if ((alg->type != CN_CBOR_INT) && (alg->type != CN_CBOR_UINT)) return true;
-	switch (alg->v.sint)
-	{
-	default:
-		return false;
-
-#ifdef USE_AES_CBC_MAC_128_64
-	case COSE_Algorithm_CBC_MAC_128_64:
-#endif
-#ifdef USE_AES_CBC_MAC_128_128
-	case COSE_Algorithm_CBC_MAC_128_128:
-#endif
-#ifdef USE_AES_CBC_MAC_256_64
-	case COSE_Algorithm_CBC_MAC_256_64:
-#endif
-#ifdef USE_AES_CBC_MAC_256_128
-	case COSE_Algorithm_CBC_MAC_256_128:
-#endif
-#ifdef USE_AES_CCM_16_64_128
-	case COSE_Algorithm_AES_CCM_16_64_128:
-#endif
-#ifdef USE_AES_CCM_16_64_256
-		case COSE_Algorithm_AES_CCM_16_64_256:
-#endif
-#ifdef USE_AES_CCM_64_64_128
-		case COSE_Algorithm_AES_CCM_64_64_128:
-#endif
-#ifdef USE_AES_CCM_64_64_256
-		case COSE_Algorithm_AES_CCM_64_64_256:
-#endif
-#ifdef USE_AES_CCM_16_128_128
-		case COSE_Algorithm_AES_CCM_16_128_128:
-#endif
-#ifdef USE_AES_CCM_16_128_256
-		case COSE_Algorithm_AES_CCM_16_128_256:
-#endif
-#ifdef USE_AES_CCM_64_128_128
-		case COSE_Algorithm_AES_CCM_64_128_128:
-#endif
-#ifdef USE_AES_CCM_64_128_256
-		case COSE_Algorithm_AES_CCM_64_128_256:
-#endif
-#ifdef USE_AES_GCM_128
-	case COSE_Algorithm_AES_GCM_128:
-#endif
-#ifdef USE_AES_GCM_192
-	case COSE_Algorithm_AES_GCM_192:
-#endif
-#ifdef USE_AES_GCM_256
-	case COSE_Algorithm_AES_GCM_256:
-#endif
-#ifdef USE_AES_KW_128
-	case COSE_Algorithm_AES_KW_128:
-#endif
-#ifdef USE_AES_KW_192
-	case COSE_Algorithm_AES_KW_192:
-#endif
-#ifdef USE_AES_KW_256
-	case COSE_Algorithm_AES_KW_256:
-#endif
-#ifdef USE_Direct_HKDF_AES_128
-	case COSE_Algorithm_Direct_HKDF_AES_128:
-#endif
-#ifdef USE_Direct_HKDF_AES_256
-	case COSE_Algorithm_Direct_HKDF_AES_256:
-#endif
-#ifdef USE_Direct_HKDF_HMAC_SHA_256
-	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_256:
-#endif
-#ifdef USE_Direct_HKDF_HMAC_SHA_512
-	case COSE_Algorithm_Direct_HKDF_HMAC_SHA_512:
-#endif
-#ifdef USE_ECDH_ES_A128KW
-	case COSE_Algorithm_ECDH_ES_A128KW:
-#endif
-#ifdef USE_ECDH_ES_A192KW
-	case COSE_Algorithm_ECDH_ES_A192KW:
-#endif
-#ifdef USE_ECDH_ES_A256KW
-	case COSE_Algorithm_ECDH_ES_A256KW:
-#endif
-#ifdef USE_ECDH_ES_HKDF_256
-	case COSE_Algorithm_ECDH_ES_HKDF_256:
-#endif
-#ifdef USE_ECDH_ES_HKDF_512
-	case COSE_Algorithm_ECDH_ES_HKDF_512:
-#endif
-#ifdef USE_ECDH_SS_A128KW
-	case COSE_Algorithm_ECDH_SS_A128KW:
-#endif
-#ifdef USE_ECDH_SS_A192KW
-	case COSE_Algorithm_ECDH_SS_A192KW:
-#endif
-#ifdef USE_ECDH_SS_A256KW
-	case COSE_Algorithm_ECDH_SS_A256KW:
-#endif
-#ifdef USE_ECDH_SS_HKDF_256
-	case COSE_Algorithm_ECDH_SS_HKDF_256:
-#endif
-#ifdef USE_ECDH_SS_HKDF_512
-	case COSE_Algorithm_ECDH_SS_HKDF_512:
-#endif
-#ifdef USE_ECDSA_SHA_256
-	case COSE_Algorithm_ECDSA_SHA_256:
-#endif
-#ifdef USE_ECDSA_SHA_384
-	case COSE_Algorithm_ECDSA_SHA_384:
-#endif
-#ifdef USE_ECDSA_SHA_512
-	case COSE_Algorithm_ECDSA_SHA_512:
-#endif
-#ifdef USE_HMAC_256_64
-	case COSE_Algorithm_HMAC_256_64:
-#endif
-#ifdef USE_HMAC_256_256
-	case COSE_Algorithm_HMAC_256_256:
-#endif
-#ifdef USE_HMAC_384_384
-	case COSE_Algorithm_HMAC_384_384:
-#endif
-#ifdef USE_HMAC_512_512
-	case COSE_Algorithm_HMAC_512_512:
-#endif
-	case COSE_Algorithm_Direct:
-	case -999: // Unsupported algorithm for testing.
-		return true;
-	}
-	return true;
+    if ((alg->type != CN_CBOR_INT) && (alg->type != CN_CBOR_UINT)) return true;
+    return check_algorithm(alg->v.sint);
 }
+
+bool IsAlgorithmSupported_tiny(const uint8_t *alg_buffer, size_t alg_buffer_size) {
+
+    CborError cbor_error = CborNoError;
+    CborEncoder encoder;
+    CborEncoder array_encoder;
+    CborParser parser;
+    CborValue value;
+    int alg_value;
+
+
+    //Retrieve the data from the message
+    cbor_error = cbor_parser_init(alg_buffer, alg_buffer_size, CborIteratorFlag_NegativeInteger, &parser, &value);
+    if ((cbor_error != CborNoError) || (!cbor_value_is_integer(&value)))
+        return false;
+
+    cbor_error = cbor_value_get_int(&value, &alg_value);
+    if (cbor_error != CborNoError)
+        return false;
+
+    return check_algorithm(alg_value);
+}
+
 
 byte * GetCBOREncoding(const cn_cbor * pControl, int * pcbEncoded)
 {
@@ -731,7 +758,45 @@ TEST(CoseTests, sign_pass_tiny_cbor_03)
     RunAlgTest(sign_pass_tiny_cbor_03);
     TEST_ASSERT_EQUAL_INT(0, CFails);
 }
-#endif
+
+
+TEST(CoseTests, sign_fail_tiny_cbor_01)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_01);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+TEST(CoseTests, sign_fail_tiny_cbor_02)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_02);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+TEST(CoseTests, sign_fail_tiny_cbor_03)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_03);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+TEST(CoseTests, sign_fail_tiny_cbor_04)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_04);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+TEST(CoseTests, sign_fail_tiny_cbor_05)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_05);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+TEST(CoseTests, sign_fail_tiny_cbor_06)
+{
+    CFails = 0;
+    RunAlgTest(sign_fail_tiny_cbor_06);
+    TEST_ASSERT_EQUAL_INT(0, CFails);
+}
+#else
 TEST(CoseTests, sign_fail_01)
 {
     CFails = 0;
@@ -773,7 +838,7 @@ TEST(CoseTests, sign_fail_06)
     RunAlgTest(sign_fail_06);
     TEST_ASSERT_EQUAL_INT(0, CFails);
 }
-
+#endif
 
 TEST_GROUP_RUNNER(CoseTests)
 {
@@ -791,11 +856,17 @@ TEST_GROUP_RUNNER(CoseTests)
     RUN_TEST_CASE(CoseTests, sign_fail_05);
     RUN_TEST_CASE(CoseTests, sign_fail_06);
 #else 
-    //Tests sign_pass_tiny_cbor_01, sign_pass_tiny_cbor_02 and sign_pass_tiny_cbor_03 checks tiny cbor functions
+    // Positives
     RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_01);
     RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_02);
     RUN_TEST_CASE(CoseTests, sign_pass_tiny_cbor_03);
-
+    // Negatives
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_01);
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_02);
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_03);
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_04);
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_05);
+    RUN_TEST_CASE(CoseTests, sign_fail_tiny_cbor_06);
 #endif
 }
 

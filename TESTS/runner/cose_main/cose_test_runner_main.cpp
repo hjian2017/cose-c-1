@@ -37,8 +37,7 @@ static void run_cose_component_tests_task()
 {
     int rc = 0;
     bool success = 0;
-    uint8_t activated_level = 0;
-    palStatus_t pal_status;
+
     bool is_mutex_used = false;
 #ifdef USE_CBOR_CONTEXT
     cn_cbor_context *cbor_ctx;

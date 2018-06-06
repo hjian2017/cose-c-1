@@ -316,9 +316,9 @@ returnError:
 	return 0;
 }
 
-#endif
+#else
 
-#ifdef USE_TINY_CBOR
+
 /*  This function uses tiny cbor functionality */
 int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded, size_t cbEncoded CBOR_CONTEXT)
 {
@@ -326,6 +326,8 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
     const cn_cbor * pFail;
     const cn_cbor * pSign;
     HCOSE_SIGN0  hSig;
+    uint8_t *cbor_alg_value = NULL;
+    size_t cbor_alg_value_size = 0;
 
     int type;
     bool fFail = false;
@@ -360,16 +362,20 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
         goto exitHere;
     }
 
+    //Get cose buffer key
     coseObjBuffersSize =  cn_cbor_get_encoded_size(pkey, &cbor_error.err);
     if (coseObjBuffersSize == -1) goto returnError;
 
-   
     coseObjBuffer = malloc(coseObjBuffersSize);
     if ((coseObjBuffer == NULL)) goto returnError;
 
-
     coseObjBuffersSizeAct =  cn_cbor_encoder_write(pkey, coseObjBuffer, coseObjBuffersSize, &cbor_error.err);
     if ((coseObjBuffersSizeAct != coseObjBuffersSize )) goto returnError;
+
+
+   /* Get algorithm buffer */
+    bool status  = COSE_Sign0_map_get_int_tiny(hSig, COSE_Header_Algorithm, COSE_BOTH, &cbor_alg_value, &cbor_alg_value_size, NULL);
+    if (!IsAlgorithmSupported_tiny(cbor_alg_value, cbor_alg_value_size)) fNoAlgSupport = true;
 
     pFail = cn_cbor_mapget_string(pInput, "fail");
 
@@ -405,7 +411,7 @@ returnError:
     return 0;
 }
 #endif
-
+#ifndef USE_TINY_CBOR
 int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT)
 {
 	int cbEncoded;
@@ -413,7 +419,7 @@ int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT)
 
 	return _ValidateSign0(pControl, pbEncoded, cbEncoded CBOR_CONTEXT_PARAM);
 }
-#ifdef USE_TINY_CBOR
+#else
 /*  This function uses tiny cbor functionality */
 int ValidateSign0BufferTinyCbor(const cn_cbor * pControl CBOR_CONTEXT)
 {
