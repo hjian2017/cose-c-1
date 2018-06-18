@@ -27,7 +27,7 @@
 //   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 //   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // --------------------------------------------------------------------------------
-
+#ifndef USE_TINY_CBOR
 #include "cn-cbor.h"
 #include <stdlib.h>
 #include <string.h>
@@ -226,3 +226,4 @@ size_t cn_cbor_encode_size(cn_cbor * object)
 
     return encodedSize; // success
 }
+#endif

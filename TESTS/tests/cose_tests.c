@@ -131,6 +131,44 @@ byte * FromHex(const char * rgch, int cch)
 
 	return pb;
 }
+// This function copied from cose core file -> source/cbor.c  cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * pcn_cbor_error).
+// If the original function changed please consider to change this function too.
+static cn_cbor * test_cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_errback * pcn_cbor_error)
+{
+    cn_cbor * pOut = NULL;
+    char * sz;
+    unsigned char * pb;
+
+    switch (pIn->type) {
+    case CN_CBOR_TEXT:
+        // Use regular calloc for string allocation. 
+        // FIXME: this could cause a memory leak if pOut does not know that he is the owner of the string and free it.
+        sz = calloc(pIn->length + 1, 1);
+        if (sz == NULL) return NULL;
+        memcpy(sz, pIn->v.str, pIn->length);
+        sz[pIn->length] = 0;
+        pOut = cn_cbor_string_create(sz CBOR_CONTEXT_PARAM, pcn_cbor_error);
+        break;
+
+    case CN_CBOR_UINT:
+        pOut = cn_cbor_int_create(pIn->v.sint CBOR_CONTEXT_PARAM, pcn_cbor_error);
+        break;
+
+    case CN_CBOR_BYTES:
+        // Use regular calloc for string allocation. 
+        // FIXME: this could cause a memory leak if pOut does not know that he is the owner of the string and free it.
+        pb = calloc((int)pIn->length, 1);
+        if (pb == NULL) return NULL;
+        memcpy(pb, pIn->v.bytes, pIn->length);
+        pOut = cn_cbor_data_create(pb, (int)pIn->length CBOR_CONTEXT_PARAM, pcn_cbor_error);
+        break;
+
+    default:
+        break;
+    }
+
+    return pOut;
+}
 static bool check_algorithm(int alg_value) {
 
     switch (alg_value)
@@ -364,7 +402,7 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 		}
 		else if (strcmp(pKey->v.str, "ctyp") == 0) {
 			keyNew = COSE_Header_Content_Type;
-			pValueNew = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+			pValueNew = test_cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
 			if (pValueNew == NULL) return false;
 		}
 		else if (strcmp(pKey->v.str, "IV_hex") == 0) {
@@ -457,7 +495,7 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 
 	cn_cbor * pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
-		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		cn_cbor * pcn = test_cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
 		switch (base) {
 		case Attributes_Encrypt_protected:
@@ -499,7 +537,7 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 
 	cn_cbor * pExternal = cn_cbor_mapget_string(pIn, "external");
 	if (pExternal != NULL) {
-		cn_cbor * pcn = cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
+		cn_cbor * pcn = test_cn_cbor_clone(pExternal, CBOR_CONTEXT_PARAM_COMMA NULL);
 		if (pcn == NULL) goto returnError;
 		switch (base) {
 #ifndef USE_TINY_CBOR
@@ -573,7 +611,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 					((RgStringKeys[i].kty == 0) || (RgStringKeys[i].kty == kty))) {
 					switch (RgStringKeys[i].operation) {
 					case OPERATION_NONE:
-						p = cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
+						p = test_cn_cbor_clone(pValue, CBOR_CONTEXT_PARAM_COMMA NULL);
 						if (p == NULL) return NULL;
 						if (!cn_cbor_mapput_int(pKeyOut, RgStringKeys[i].keyNew, p, CBOR_CONTEXT_PARAM_COMMA NULL)) return NULL;
 						break;
