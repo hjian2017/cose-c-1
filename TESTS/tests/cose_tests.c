@@ -639,7 +639,7 @@ cn_cbor * BuildKey(const cn_cbor * pKeyIn, bool fPublicKey)
 
 	return pKeyOut;
 }
-
+#ifndef USE_TINY_CBOR
 bool cn_cbor_array_replace(cn_cbor * cb_array, cn_cbor * cb_value, int index, CBOR_CONTEXT_COMMA cn_cbor_errback *errp);
 
 bool Test_cn_cbor_array_replace()
@@ -670,7 +670,7 @@ bool Test_cn_cbor_array_replace()
 
 	return true;
 }
-
+#endif
 void RunAlgTest(char *cbor_input_json_string)
 {
     const cn_cbor *pControl = ParseString(cbor_input_json_string, 0, strlen(cbor_input_json_string));
