@@ -145,6 +145,7 @@ errorReturn:
 	return NULL;
 }
 
+
 HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	COSE_Sign0Message * pobj = pIn;
@@ -504,7 +505,7 @@ errorReturn:
 #else
 
 
-
+//This function is currently not used by core or by tests, in case we will need to use this function we need to change all cn-cbor functionality to tinycbor.
 bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 h, int key,/* cn_cbor * value,*/ int flags,  cose_errback * perr)
 {
     CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
@@ -599,7 +600,7 @@ bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t *
     return (status) ? _COSE_Sign0_validate_tiny(hSign, pKey, keySize, perr) : status;
 }
 
-bool * COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror)
+bool  COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror)
 {
     if (!IsValidSign0Handle(h)) {
         if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
@@ -612,8 +613,8 @@ bool * COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **
 static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
 {
 
-    size_t cbToSign = 0;
-    int bytesWritten = 0;
+    //size_t cbToSign = 0;
+    //int bytesWritten = 0;
     CborError cbor_error = CborNoError;
     CborEncoder encoder;
     CborEncoder array_encoder;
@@ -628,14 +629,14 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 
     //Retrieve the data from the message
     cbor_error = cbor_parser_init(pMessage->m_message.message_cbor.buffer, pMessage->m_message.message_cbor.buffer_size, CborIteratorFlag_NegativeInteger, &parser, &value);
-    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+    CHECK_CONDITION_CBOR(cbor_error == CborNoError, cbor_error);
 
     cbor_error = cbor_get_array_element(&value, INDEX_BODY, &data_to_sign);
-    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
-    CHECK_CONDITION(cbor_value_is_byte_string(&data_to_sign) == true, cbor_error);
+    CHECK_CONDITION_CBOR(cbor_error == CborNoError, cbor_error);
+    CHECK_CONDITION_CBOR(cbor_value_is_byte_string(&data_to_sign) == true, cbor_error);
 
-    cbor_error = cbor_value_get_byte_string_chunk(&data_to_sign, &data_to_sign_buffer, &data_to_sign_buffer_size, NULL);
-    CHECK_CONDITION(cbor_error == CborNoError, cbor_error);
+    cbor_error = cbor_value_get_byte_string_chunk(&data_to_sign, (const uint8_t**)&data_to_sign_buffer, &data_to_sign_buffer_size, NULL);
+    CHECK_CONDITION_CBOR(cbor_error == CborNoError, cbor_error);
 
     while (true) {
 
@@ -645,38 +646,38 @@ static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign,
 
         //Create array with 4 members
         cbor_error = cbor_encoder_create_array(&encoder, &array_encoder, 4); // Use CborIndefiniteLength if map size not known upon creation
-        CHECK_CONDITION(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
+        CHECK_CONDITION_CBOR(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
 
         //1. Add to array szContext string
         cbor_error = cbor_encode_text_stringz(&array_encoder, szContext);
-        CHECK_CONDITION(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
+        CHECK_CONDITION_CBOR(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
 
         //2. Add to array protected map as byte string
 
         //Check the the preotected map was initialized
-        CHECK_CONDITION((pMessage->m_message.message_protected_map_cbor.is_map_initialized == true), cbor_error);
+        CHECK_CONDITION_CBOR((pMessage->m_message.message_protected_map_cbor.is_map_initialized == true), cbor_error);
 
         // If the protected map is empty create empty byte string, otherwise use protected map data
         if ((pMessage->m_message.message_protected_map_cbor.buffer_size == 1) && (pMessage->m_message.message_protected_map_cbor.buffer[0] == 0xa0)) {
             cbor_error = cbor_encode_byte_string(&array_encoder, NULL, 0);
-            CHECK_CONDITION(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
+            CHECK_CONDITION_CBOR(((cbor_error == CborNoError) || (cbor_error == CborErrorOutOfMemory && iteration_count == 0)), cbor_error);
         }
         else {
             cbor_error = cbor_encode_byte_string(&array_encoder, pMessage->m_message.message_protected_map_cbor.buffer, pMessage->m_message.message_protected_map_cbor.buffer_size);
-            CHECK_CONDITION((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
+            CHECK_CONDITION_CBOR((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
         }
 
         //3. Add pb external data
         cbor_error = cbor_encode_byte_string(&array_encoder, pMessage->m_message.m_pbExternal, (int)pMessage->m_message.m_cbExternal);
-        CHECK_CONDITION((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
+        CHECK_CONDITION_CBOR((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
 
         //4. Add data
         //Add the retrieved data to array
         cbor_error = cbor_encode_byte_string(&array_encoder, data_to_sign_buffer, data_to_sign_buffer_size);
-        CHECK_CONDITION((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
+        CHECK_CONDITION_CBOR((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
 
         cbor_error = cbor_encoder_close_container(&encoder, &array_encoder);
-        CHECK_CONDITION((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
+        CHECK_CONDITION_CBOR((cbor_error == CborNoError || cbor_error == CborErrorOutOfMemory && iteration_count == 0), cbor_error);
 
         if (cbor_error == CborErrorOutOfMemory  && iteration_count == 0) {
 
@@ -749,7 +750,6 @@ bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, si
 
     default:
         FAIL_CONDITION(COSE_ERR_UNKNOWN_ALGORITHM);
-        break;
     }
 
     fRet = true;

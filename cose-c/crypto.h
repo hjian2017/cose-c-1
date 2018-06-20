@@ -115,6 +115,9 @@ bool ECDH_ComputeSecret(COSE * pReciient, cn_cbor ** ppKeyMe, const cn_cbor * pK
 * @return                  none
 */
 void rand_bytes(byte * pb, size_t cb);
+#else
+
+bool ECDSA_Verify_tiny(COSE *pSigner, int index, const byte *pKey, size_t keySize, int cbitDigest, const unsigned char *rgbToSign, size_t cbToSign, cose_errback *perr);
 #endif
 #endif
 

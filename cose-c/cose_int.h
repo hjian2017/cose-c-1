@@ -321,6 +321,13 @@ extern bool _COSE_Mac0_Release(COSE_Mac0Message * p CBOR_CONTEXT);
 extern HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE * pMessage, int iSigner, cose_errback * perr);
 extern bool _COSE_CounterSign_add(COSE * pMessage, HCOSE_COUNTERSIGN hSigner, cose_errback * perr);
 extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COMMA cose_errback * perr);
+#else
+HCOSE_SIGN0 _COSE_Sign0_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, COSE_Sign0Message * pIn, cose_errback * perr);
+//This function currently not in use
+bool _COSE_map_put_tiny(COSE * pCose, int key, /*cn_cbor * value,*/ int flags, cose_errback * perr);
+bool  _COSE_map_get_int_tiny(COSE * pcose, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror);
+bool _COSE_Init_From_Object_tiny(COSE* pobj, const uint8_t *coseBuffer, size_t coseBufferSize, cose_errback * perr);
+
 #endif
 //
 //  Debugging Items

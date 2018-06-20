@@ -92,7 +92,6 @@ typedef enum {
 typedef struct _cose_errback {
 	/** The error, or CN_CBOR_NO_ERROR if none */
 	cose_error err;
-
 } cose_errback;
 
 typedef enum {
@@ -457,11 +456,30 @@ HCOSE COSE_Init_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, int * pty
 // Validate with a user provided public key buffer
 bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr);
 
+
 // Validate with a user provided public key
 bool COSE_Sign0_validate_with_raw_pk_tiny(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
 
 /*  This function uses tiny cbor functionality */
 bool GetECKeyFromCoseBuffer(const uint8_t *coseEncBuffer, size_t coseEncBufferSize, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr);
+/**
+* Create an HCOSE from an encoded buffer containing a COSE.
+*
+* The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
+*
+* @param[in]  rgbData       Pointer to a buffer containing the encoded COSE.
+* @param[in]  cbData        The size of rgbData buffer.
+* @param[out] pType         Pointer to the location where the COSE_object_type will be output to the caller.
+*                           Should be the same as the provided struct_type.
+* @param[in]  struct_type   Enum representing the type of COSE.
+* @param[out] cose_errback  Pointer to COSE error object where error code will be stored. Can be NULL.
+*
+* @return
+*       HCOSE handle which points to the specific COSE object based on the struct_type.
+*       NULL if error has occurred.
+*/
+HCOSE COSE_Decode_tiny(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, cose_errback * perr);
+bool  COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror);
 #endif
 
 

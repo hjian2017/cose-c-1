@@ -363,13 +363,13 @@ int _ValidateSign0_with_buffer(const cn_cbor * pControl, const byte * pbEncoded,
     }
 
     //Get cose buffer key
-    coseObjBuffersSize =  cn_cbor_get_encoded_size(pkey, &cbor_error.err);
+    coseObjBuffersSize =  cn_cbor_get_encoded_size(pkey, &cbor_error);
     if (coseObjBuffersSize == -1) goto returnError;
 
     coseObjBuffer = malloc(coseObjBuffersSize);
     if ((coseObjBuffer == NULL)) goto returnError;
 
-    coseObjBuffersSizeAct =  cn_cbor_encoder_write(pkey, coseObjBuffer, coseObjBuffersSize, &cbor_error.err);
+    coseObjBuffersSizeAct =  cn_cbor_encoder_write(pkey, coseObjBuffer, coseObjBuffersSize, &cbor_error);
     if ((coseObjBuffersSizeAct != coseObjBuffersSize )) goto returnError;
 
 
