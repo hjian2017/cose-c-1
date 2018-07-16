@@ -1,42 +1,38 @@
 
-# COSE-C Implementation [![Build Status](https://travis-ci.org/cose-wg/COSE-C.svg?branch=master)](https://travis-ci.org/cose-wg/COSE-C) [![Coverage Status](https://coveralls.io/repos/cose-wg/COSE-C/badge.svg?branch=master&service=github)](https://coveralls.io/github/cose-wg/COSE-C?branch=master) [![Coverity Status](https://scan.coverity.com/projects/7542/badge.svg)](https://scan.coverity.com/projects/jimsch-cose-c)
+# COSE-C Implementation 
 
 This project is a C implementation of the IETF CBOR Encoded Message Syntax (COSE).
 There are currently two versions of the COSE document that can be read.
 The most current work in progress draft can be found on github in the [cose-wg/cose-spec](https://cose-wg.github.io/cose-spec/) project.
 The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/html/draft-ietf-cose-msg).
 
-The project is using the [CN-CBOR](https://github.com/cabo/cn-cbor) project to provide an implementation of the Concise Binary Object Representation or [CBOR](https://datatracker.ietf.org/doc/rfc7049/).
-
-The project is using OpenSSL for the cryptographic primitives.
-
+## Implementation Details 
+* This implementation is a copy of [COSE-C](https://github.com/cose-wg/COSE-C)
+* The project is using an implementation of the Concise Binary Object Representation or [CBOR](https://datatracker.ietf.org/doc/rfc7049/).
+ There are 2 available implemnations of CBOR:
+  * [tinycbor](https://github.com/ARMmbed/tinycbor) project. Provides memory efficient implementation of CBOR.
+  * cn-cbor project. Provides performance efficient implementation of CBOR. Has large memory consumption.
+  cn-cbor implementation can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/factory-configurator-client/secsrv-cbor)
+* In order to compile COSE library with tinycbor implementation, use **USE_TINY_CBOR** compilation flag.
+* Most of current library uses cn-cbor. Functionality that use tinycbor is **Sign0 validate**. Following is list of functions that we've implemented using tinycbor:
+  * `COSE_Init_tiny()` - same functionality as `COSE_Init()`, but uses tinycbor instead of cn-cbor.
+  * `COSE_Sign0_validate_with_raw_pk_tiny()` - same functionality as `COSE_Sign0_validate_with_raw_pk()`, but uses tinycbor instead of cn-cbor.
+  * `GetECKeyFromCoseBuffer()` - same functionality as `GetECKeyFromCoseKeyObj()`, but uses tinycbor instead of cn-cbor.
+  * `COSE_Sign0_validate_with_cose_key_buffer()` - same functionality as `COSE_Sign0_validate_with_cose_key()`, but uses tinycbor instead of cn-cbor.
+  * `COSE_Sign0_Free()` - implemented both using tinycbor and cn-cbor
+* One that compiles this library will also need **mbed-client-pal** and **mbedtls** libraries:
+  * mbed-client-pal - platform abstraction layer that is used in Mbed Cloud Client and can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/mbed-client-pal)
+  * mbedtls - cryptographic library that can found [here](https://github.com/ARMmbed/mbedtls) or as part of Mbed OS delivery.
+ 
 ## Contributing
 
 Go ahead, file issues, make pull requests.
 
-## Building
+## Building and Tests
 
-The project is setup to build using *CMake.*  The way that the CMake files are setup, it requires that version 3.0 or higher is used.
+The project has unit tests. They are compiled as part of internal infrastructure that isn't released.
+One who would like to compile them, will need to use his own build system.
+ 
+## Restrictions
 
-The project requires the use of cn-cbor(https://github.com/cabo/cn-cbor) in order to build.  The CMake configuration files will automatically pull down the correct version when run.
-
-## Memory Model
-
-The memory model used in this library is a mess.  This is in large part because the memory model of cn-cbor is still poorly understood.
-
-There are three different memory models that can be used with cn-cbor and cose-c, at this time only one of them is going to produce good results for long running systems.
-
-The cn-cbor project was built with a specific memory model, but did not limit itself to that memory model when writing the code.
-It was originally designed for working on small devices that use a block allocator with sub-allocations done from that allocated block.
-This allows for all of the items allocated in that large block to be freed in a single operation when everything is done.
-
-* Build without USE_CONTEXT: This model uses standard calloc/free and suffers from the cn-cbor memory model problems.
-
-* Build with USE_CONTEXT and pass in NULL:  This model is equivalent to the previous configuration.
-
-* Build with USE_CONTEXT and pass in a block allocator:  This model works, but requires that you provide the allocator.
-
-##Testing
-The testing are disabled by default.
-To enable COSE unit-tests run the following command from your working shell prior building -
-export COSE_TESTS_ENABLED=1
+APIs can be broken in the future.
