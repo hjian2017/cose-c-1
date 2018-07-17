@@ -9,12 +9,12 @@ The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/h
 ## Implementation Details 
 * This implementation is a copy of [COSE-C](https://github.com/cose-wg/COSE-C)
 * The project is using an implementation of the Concise Binary Object Representation or [CBOR](https://datatracker.ietf.org/doc/rfc7049/).
- There are 2 available implemnations of CBOR:
+ There are 2 available implementations of CBOR:
   * [tinycbor](https://github.com/ARMmbed/tinycbor) project. Provides memory efficient implementation of CBOR.
   * cn-cbor project. Provides performance efficient implementation of CBOR. Has large memory consumption.
   cn-cbor implementation can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/factory-configurator-client/secsrv-cbor)
 * In order to compile COSE library with tinycbor implementation, use **USE_TINY_CBOR** compilation flag.
-* Most of current library uses cn-cbor. Functionality that use tinycbor is **Sign0 validate**. Following is list of functions that we've implemented using tinycbor:
+* Most of current library uses cn-cbor. Functionality that is available for tinycbor is `Sign0 validate` **only**. Following is list of functions that we've implemented using tinycbor:
   * `COSE_Init_tiny()` - same functionality as `COSE_Init()`, but uses tinycbor instead of cn-cbor.
   * `COSE_Sign0_validate_with_raw_pk_tiny()` - same functionality as `COSE_Sign0_validate_with_raw_pk()`, but uses tinycbor instead of cn-cbor.
   * `GetECKeyFromCoseBuffer()` - same functionality as `GetECKeyFromCoseKeyObj()`, but uses tinycbor instead of cn-cbor.
@@ -30,8 +30,12 @@ Go ahead, file issues, make pull requests.
 
 ## Building and Tests
 
-The project has unit tests. They are compiled as part of internal infrastructure that isn't released.
-One who would like to compile them, will need to use his own build system.
+* The project has unit tests. They are compiled as part of internal infrastructure that isn't released.  
+  One who would like to compile them, will need to use his own build system.
+* The tests checks only `Sign0 validate` functionality. 
+* If **USE_TINY_CBOR** compilation flag is used, then the tests will be compiled with tinycbor implementation.   
+Else, they will be compiled with cn-cbor implementation. 
+
  
 ## Restrictions
 
