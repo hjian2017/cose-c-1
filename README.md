@@ -1,15 +1,15 @@
 
-# COSE-C Implementation 
+# COSE-C implementation 
 
 This project is a C implementation of the IETF CBOR Encoded Message Syntax (COSE).
-There are currently two versions of the COSE document that can be read.
-The most current work in progress draft can be found on github in the [cose-wg/cose-spec](https://cose-wg.github.io/cose-spec/) project.
-The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/html/draft-ietf-cose-msg).
+There are two separate versions of the COSE documentation:
+* The most current work in progress draft can be found on github in the [cose-wg/cose-spec](https://cose-wg.github.io/cose-spec/) project.
+* The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/html/draft-ietf-cose-msg).
 
-## Implementation Details 
-* This implementation is a copy of [COSE-C](https://github.com/cose-wg/COSE-C)
+## Implementation details 
+* This implementation is a copy of [COSE-C](https://github.com/cose-wg/COSE-C).
 * The project is using an implementation of the Concise Binary Object Representation or [CBOR](https://datatracker.ietf.org/doc/rfc7049/).
- There are 2 available implementations of CBOR:
+ There are two CBOR implementations available:
   * [tinycbor](https://github.com/ARMmbed/tinycbor) project. Provides memory efficient implementation of CBOR.
   * cn-cbor project. Provides performance efficient implementation of CBOR. Has large memory consumption.
   cn-cbor implementation can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/factory-configurator-client/secsrv-cbor)
@@ -28,13 +28,13 @@ The IETF also keeps a copy of the spec in the [COSE WG](https://tools.ietf.org/h
 
 Go ahead, file issues, make pull requests.
 
-## Building and Tests
+## Building and tests
 
-* The project has unit tests. They are compiled as part of internal infrastructure that isn't released.  
-  One who would like to compile them, will need to use his own build system.
-* The tests checks only `Sign0 validate` functionality. 
-* If **USE_TINY_CBOR** compilation flag is used, then the tests will be compiled with tinycbor implementation.   
-Else, they will be compiled with cn-cbor implementation. 
+* The project includes unit tests. They are compiled as part of the internal infrastructure that isn't released.  
+  If you want to compile them, you need to use your own build system.
+* The tests only checks the `Sign0 validate` functionality. 
+* If you are using the **USE_TINY_CBOR** compilation flag, the tests are compiled with the tinycbor implementation.   
+  Without the flag, they are compiled using the cn-cbor.
 
  
 ## Restrictions
