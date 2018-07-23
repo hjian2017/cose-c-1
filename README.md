@@ -13,7 +13,7 @@ There are two separate versions of the COSE documentation:
   * [tinycbor](https://github.com/ARMmbed/tinycbor) project. Provides memory efficient implementation of CBOR.
   * cn-cbor project. Provides performance efficient implementation of CBOR. Has large memory consumption.
   cn-cbor implementation can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/factory-configurator-client/secsrv-cbor)
-* In order to compile COSE library with tinycbor implementation, use **USE_TINY_CBOR** compilation flag.
+* To compile COSE library with tinycbor implementation, use **USE_TINY_CBOR** compilation flag.
 * Most of current library uses cn-cbor. Functionality that is available for tinycbor is `Sign0 validate` **only**. Following is list of functions that we've implemented using tinycbor:
   * `COSE_Init_tiny()` - same functionality as `COSE_Init()`, but uses tinycbor instead of cn-cbor.
   * `COSE_Sign0_validate_with_raw_pk_tiny()` - same functionality as `COSE_Sign0_validate_with_raw_pk()`, but uses tinycbor instead of cn-cbor.
