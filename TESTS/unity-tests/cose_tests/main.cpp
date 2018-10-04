@@ -14,7 +14,7 @@
 
 #include <stdlib.h>
 
-#include "common_setup.h"
+#include "mcc_common_setup.h"
 #include "pal.h"
 
 #include "unity_fixture.h"
