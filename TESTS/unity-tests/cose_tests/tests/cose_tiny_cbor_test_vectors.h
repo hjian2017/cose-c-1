@@ -24,7 +24,7 @@ char sign_pass_tiny_cbor_01[] = "{" \
 "\"title\" : \"sign - pass - 01: Redo protected\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\" : {"\
+"\"sign1_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" :\"11\","\
@@ -57,7 +57,7 @@ char sign_pass_tiny_cbor_02[] = "{" \
 "\"title\":\"sign-pass-02: External\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\" : {"\
+"\"sign1_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\" : \"EC\","\
 "\"kid\" : \"11\","\
@@ -90,7 +90,7 @@ char sign_pass_tiny_cbor_03[] = "{" \
 "\"title\":\"sign-pass-03: Remove CBOR Tag\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\" : {"\
+"\"sign1_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" : \"11\","\
@@ -129,7 +129,7 @@ char sign_fail_tiny_cbor_01[] = "{" \
 "\"fail\" : true,"\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\" : {"\
+"\"sign1_tiny_cbor\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" : \"11\","\
@@ -165,7 +165,7 @@ char sign_fail_tiny_cbor_02[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\":{"\
+"\"sign1_tiny_cbor\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -201,7 +201,7 @@ char sign_fail_tiny_cbor_03[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\":{"\
+"\"sign1_tiny_cbor\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -239,7 +239,7 @@ char sign_fail_tiny_cbor_04[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\":{"\
+"\"sign1_tiny_cbor\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -277,7 +277,7 @@ char sign_fail_tiny_cbor_05[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\":{"\
+"\"sign1_tiny_cbor\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -315,7 +315,7 @@ char sign_fail_tiny_cbor_06[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0_tiny_cbor\":{"\
+"\"sign1_tiny_cbor\":{"\
 "\"protected\":{"\
 "\"alg\":\"ES256\","\
 "\"ctyp\":0"\

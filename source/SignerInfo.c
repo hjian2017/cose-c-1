@@ -347,7 +347,7 @@ bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, 
 	CHECK_CONDITION((cnSignature != NULL) && (cnSignature->type == CN_CBOR_BYTES), COSE_ERR_INVALID_PARAMETER);
 
 
-    // FIXME: This algorithm is currently not in use. When we do use it we might want it to be done like _COSE_Sign0_validate
+    // FIXME: This algorithm is currently not in use. When we do use it we might want it to be done like _COSE_Sign1_validate
 
     byte pKey[1024];
     size_t keySize;

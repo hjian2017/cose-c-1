@@ -470,12 +470,12 @@ bool SetAttributes(HCOSE hHandle, const cn_cbor * pAttributes, int which, int ms
 			f = COSE_Signer_map_put_int((HCOSE_SIGNER)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 
-		case Attributes_Sign0_protected:
-			f = COSE_Sign0_map_put_int((HCOSE_SIGN0)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
+		case Attributes_Sign1_protected:
+			f = COSE_Sign1_map_put_int((HCOSE_SIGN1)hHandle, keyNew, pValueNew, which, CBOR_CONTEXT_PARAM_COMMA NULL);
 			break;
 #else
-        case Attributes_Sign0_protected:
-            f = COSE_Sign0_map_put_int_tiny((HCOSE_SIGN0)hHandle, keyNew,/* pValueNew, */which,  NULL);
+        case Attributes_Sign1_protected:
+            f = COSE_Sign1_map_put_int_tiny((HCOSE_SIGN1)hHandle, keyNew,/* pValueNew, */which,  NULL);
             break;
 #endif
 		}
@@ -518,8 +518,8 @@ bool SetSendingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 
-		case Attributes_Sign0_protected:
-			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+		case Attributes_Sign1_protected:
+			if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 		}
 	}
@@ -561,8 +561,8 @@ bool SetReceivingAttributes(HCOSE hMsg, const cn_cbor * pIn, int base)
 			if (!COSE_Signer_SetExternal((HCOSE_SIGNER)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 #endif
-		case Attributes_Sign0_protected:
-			if (!COSE_Sign0_SetExternal((HCOSE_SIGN0)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
+		case Attributes_Sign1_protected:
+			if (!COSE_Sign1_SetExternal((HCOSE_SIGN1)hMsg, FromHex(pcn->v.str, (int)pcn->length), pcn->length / 2, NULL)) goto returnError;
 			break;
 		}
 	}
@@ -718,10 +718,10 @@ void RunAlgTest(char *cbor_input_json_string)
             //BuildSignedMessage(pControl);
         }
     }
-    else if (cn_cbor_mapget_string(pInput, "sign0") != NULL) {
-        if (ValidateSign0(pControl CBOR_CONTEXT_PARAM)) {
+    else if (cn_cbor_mapget_string(pInput, "sign1") != NULL) {
+        if (ValidateSign1(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
-            //BuildSign0Message(pControl);
+            //BuildSign1Message(pControl);
         }
     }
     else if (cn_cbor_mapget_string(pInput, "encrypted") != NULL) {
@@ -732,10 +732,10 @@ void RunAlgTest(char *cbor_input_json_string)
     }
 #else
     /*  This group calls functions that checks tiny cbor functionality */
-    if (cn_cbor_mapget_string(pInput, "sign0_tiny_cbor") != NULL) {
-        if (ValidateSign0BufferTinyCbor(pControl CBOR_CONTEXT_PARAM)) {
+    if (cn_cbor_mapget_string(pInput, "sign1_tiny_cbor") != NULL) {
+        if (ValidateSign1BufferTinyCbor(pControl CBOR_CONTEXT_PARAM)) {
             //FIXME: yet implemented by porting layer
-            //BuildSign0Message(pControl);
+            //BuildSign1Message(pControl);
         }
     }
 #endif

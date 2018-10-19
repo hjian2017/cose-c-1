@@ -24,18 +24,18 @@ void Recipient_Corners(CBOR_CONTEXT_NO_COMMA);
 int ValidateSigned(const cn_cbor * pControl CBOR_CONTEXT);
 int SignMessage(CBOR_CONTEXT_NO_COMMA);
 int BuildSignedMessage(const cn_cbor * pControl CBOR_CONTEXT);
-int ValidateSign0(const cn_cbor * pControl CBOR_CONTEXT);
+int ValidateSign1(const cn_cbor * pControl CBOR_CONTEXT);
 #ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
-int ValidateSign0BufferTinyCbor(const cn_cbor * pControl CBOR_CONTEXT);
+int ValidateSign1BufferTinyCbor(const cn_cbor * pControl CBOR_CONTEXT);
 #endif
-int BuildSign0Message(const cn_cbor * pControl CBOR_CONTEXT);
+int BuildSign1Message(const cn_cbor * pControl CBOR_CONTEXT);
 #ifdef USE_TINY_CBOR
 /*  This function uses tiny cbor functionality */
-int BuildSign0MessageWithCoseBuffer(const cn_cbor * pControl CBOR_CONTEXT);
+int BuildSign1MessageWithCoseBuffer(const cn_cbor * pControl CBOR_CONTEXT);
 #endif
 void Sign_Corners(CBOR_CONTEXT_NO_COMMA);
-void Sign0_Corners(CBOR_CONTEXT_NO_COMMA);
+void Sign1_Corners(CBOR_CONTEXT_NO_COMMA);
 
 
 // mac_testc
@@ -64,7 +64,7 @@ typedef enum {
 	Attributes_Encrypt_protected,
 	Attributes_Sign_protected,
 	Attributes_Signer_protected,
-	Attributes_Sign0_protected,
+	Attributes_Sign1_protected,
 } whichSet;
 
 extern int CFails;

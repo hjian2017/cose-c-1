@@ -14,12 +14,12 @@ There are two separate versions of the COSE documentation:
   * cn-cbor project. Provides performance efficient implementation of CBOR. Has large memory consumption.
   cn-cbor implementation can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/factory-configurator-client/secsrv-cbor)
 * To compile COSE library with tinycbor implementation, use **USE_TINY_CBOR** compilation flag.
-* Most of current library uses cn-cbor. Functionality that is available for tinycbor is `Sign0 validate` **only**. Following is list of functions that we've implemented using tinycbor:
+* Most of current library uses cn-cbor. Functionality that is available for tinycbor is `Sign1 validate` **only**. Following is list of functions that we've implemented using tinycbor:
   * `COSE_Init_tiny()` - same functionality as `COSE_Init()`, but uses tinycbor instead of cn-cbor.
-  * `COSE_Sign0_validate_with_raw_pk_tiny()` - same functionality as `COSE_Sign0_validate_with_raw_pk()`, but uses tinycbor instead of cn-cbor.
+  * `COSE_Sign1_validate_with_raw_pk_tiny()` - same functionality as `COSE_Sign1_validate_with_raw_pk()`, but uses tinycbor instead of cn-cbor.
   * `GetECKeyFromCoseBuffer()` - same functionality as `GetECKeyFromCoseKeyObj()`, but uses tinycbor instead of cn-cbor.
-  * `COSE_Sign0_validate_with_cose_key_buffer()` - same functionality as `COSE_Sign0_validate_with_cose_key()`, but uses tinycbor instead of cn-cbor.
-  * `COSE_Sign0_Free()` - implemented both using tinycbor and cn-cbor
+  * `COSE_Sign1_validate_with_cose_key_buffer()` - same functionality as `COSE_Sign1_validate_with_cose_key()`, but uses tinycbor instead of cn-cbor.
+  * `COSE_Sign1_Free()` - implemented both using tinycbor and cn-cbor
 * One that compiles this library will also need **mbed-client-pal** and **mbedtls** libraries:
   * mbed-client-pal - platform abstraction layer that is used in Mbed Cloud Client and can be found [here](https://github.com/ARMmbed/mbed-cloud-client/tree/master/mbed-client-pal)
   * mbedtls - cryptographic library that can found [here](https://github.com/ARMmbed/mbedtls) or as part of Mbed OS delivery.
@@ -32,7 +32,7 @@ Go ahead, file issues, make pull requests.
 
 * The project includes unit tests. They are compiled as part of the internal infrastructure that isn't released.  
   If you want to compile them, you need to use your own build system.
-* The tests only checks the `Sign0 validate` functionality. 
+* The tests only checks the `Sign1 validate` functionality. 
 * If you are using the **USE_TINY_CBOR** compilation flag, the tests are compiled with the tinycbor implementation.   
   Without the flag, they are compiled using the cn-cbor.
 

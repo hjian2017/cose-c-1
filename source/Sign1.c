@@ -38,12 +38,12 @@
 #include "cose_int.h"
 #include "crypto.h"
 
-COSE * Sign0Root = NULL;
+COSE * Sign1Root = NULL;
 
 /*! \private
-* @brief Test if a HCOSE_SIGN0 handle is valid
+* @brief Test if a HCOSE_SIGN1 handle is valid
 *
-*  Internal function to test if a sign0 message handle is valid.
+*  Internal function to test if a sign1 message handle is valid.
 *  This will start returning invalid results and cause the code to
 *  crash if handles are not released before the memory that underlies them
 *  is deallocated.  This is an issue of a block allocator is used since
@@ -54,12 +54,12 @@ COSE * Sign0Root = NULL;
 *  @returns result of check
 */
 
-bool IsValidSign0Handle(HCOSE_SIGN0 h)
+bool IsValidSign1Handle(HCOSE_SIGN1 h)
 {
-    COSE_Sign0Message * p = (COSE_Sign0Message *)h;
+    COSE_Sign1Message * p = (COSE_Sign1Message *)h;
 
     if (p == NULL) return false;
-    return _COSE_IsInList(Sign0Root, (COSE *)p);
+    return _COSE_IsInList(Sign1Root, (COSE *)p);
 }
 
 /*!
@@ -77,27 +77,27 @@ bool IsValidSign0Handle(HCOSE_SIGN0 h)
 * @return result of the operation.
 */
 
-bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
+bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr)
 {
-    if (!IsValidSign0Handle(hcose)) {
+    if (!IsValidSign1Handle(hcose)) {
         if (perr != NULL) perr->err = COSE_ERR_INVALID_HANDLE;
         return false;
     }
 
-    return _COSE_SetExternal(&((COSE_Sign0Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
+    return _COSE_SetExternal(&((COSE_Sign1Message *)hcose)->m_message, pbExternalData, cbExternalData, perr);
 }
 
 #ifndef USE_TINY_CBOR
 
 
-bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
+bool COSE_Sign1_Free(HCOSE_SIGN1 h CBOR_CONTEXT)
 {
 #ifdef USE_CBOR_CONTEXT
     cn_cbor_context context;
 #endif
-    COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+    COSE_Sign1Message * pMessage = (COSE_Sign1Message *)h;
 
-    if (!IsValidSign0Handle(h)) return false;
+    if (!IsValidSign1Handle(h)) return false;
 
     //  Check reference counting
     if (pMessage->m_message.m_refCount > 1) {
@@ -105,68 +105,68 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 h CBOR_CONTEXT)
         return true;
     }
 
-    _COSE_RemoveFromList(&Sign0Root, &pMessage->m_message);
+    _COSE_RemoveFromList(&Sign1Root, &pMessage->m_message);
 
 #ifdef USE_CBOR_CONTEXT
     context = pMessage->m_message.m_allocContext;
 #endif
 
-    _COSE_Sign0_Release(pMessage CBOR_CONTEXT_PARAM);
+    _COSE_Sign1_Release(pMessage CBOR_CONTEXT_PARAM);
 
     COSE_FREE(pMessage);
 
     return true;
 }
-bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor *pKey, cose_errback * perr);
-bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
-void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT);
+bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor *pKey, cose_errback * perr);
+bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
+void _COSE_Sign1_Release(COSE_Sign1Message * p CBOR_CONTEXT);
 
 
-HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
 	CHECK_CONDITION(flags == COSE_INIT_FLAGS_NONE, COSE_ERR_INVALID_PARAMETER);
-	COSE_Sign0Message * pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
+	COSE_Sign1Message * pobj = (COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
 	if (pobj == NULL) {
 		if (perr != NULL) perr->err = COSE_ERR_OUT_OF_MEMORY;
 		return NULL;
 	}
 
 	if (!_COSE_Init(flags,&pobj->m_message, COSE_sign_object, CBOR_CONTEXT_PARAM_COMMA perr)) {
-		_COSE_Sign0_Release(pobj CBOR_CONTEXT_PARAM);
+		_COSE_Sign1_Release(pobj CBOR_CONTEXT_PARAM);
 		COSE_FREE(pobj);
 		return NULL;
 	}
 
-	_COSE_InsertInList(&Sign0Root, &pobj->m_message);
+	_COSE_InsertInList(&Sign1Root, &pobj->m_message);
 
-	return (HCOSE_SIGN0)pobj;
+	return (HCOSE_SIGN1)pobj;
 
 errorReturn:
 	return NULL;
 }
 
 
-HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
+HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor * cbor, COSE_Sign1Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	COSE_Sign0Message * pobj = pIn;
+	COSE_Sign1Message * pobj = pIn;
 	cose_errback error = { 0 };
 
 	if (perr == NULL) perr = &error;
 
-	if (pobj == NULL) pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
+	if (pobj == NULL) pobj = (COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
 	CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
 	if (!_COSE_Init_From_Object(&pobj->m_message, cbor, CBOR_CONTEXT_PARAM_COMMA perr)) {
 		goto errorReturn;
 	}
 
-	if (pIn == NULL) _COSE_InsertInList(&Sign0Root, &pobj->m_message);
+	if (pIn == NULL) _COSE_InsertInList(&Sign1Root, &pobj->m_message);
 
-	return(HCOSE_SIGN0)pobj;
+	return(HCOSE_SIGN1)pobj;
 
 errorReturn:
 	if (pobj != NULL) {
-		_COSE_Sign0_Release(pobj CBOR_CONTEXT_PARAM);
+		_COSE_Sign1_Release(pobj CBOR_CONTEXT_PARAM);
 		if (pIn == NULL) COSE_FREE(pobj);
 	}
 	return NULL;
@@ -174,21 +174,21 @@ errorReturn:
 
 
 
-void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT)
+void _COSE_Sign1_Release(COSE_Sign1Message * p CBOR_CONTEXT)
 {
 	_COSE_Release(&p->m_message CBOR_CONTEXT_PARAM);
 }
 
-bool COSE_Sign0_SetContent(HCOSE_SIGN0 h, const byte * rgb, size_t cb, cose_errback * perr)
+bool COSE_Sign1_SetContent(HCOSE_SIGN1 h, const byte * rgb, size_t cb, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = NULL;
 #endif
 	cn_cbor * p = NULL;
-	COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+	COSE_Sign1Message * pMessage = (COSE_Sign1Message *)h;
 	bool fRet = false;
 
-	CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidSign1Handle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(rgb != NULL, COSE_ERR_INVALID_PARAMETER);
 
 #ifdef USE_CBOR_CONTEXT
@@ -210,15 +210,15 @@ errorReturn:
 
 
 
-bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
+bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor * pKey, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
 	// cn_cbor_context * context = NULL;
 #endif
-	COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+	COSE_Sign1Message * pMessage = (COSE_Sign1Message *)h;
 	const cn_cbor * pcborProtected;
 
-	if (!IsValidSign0Handle(h)) {
+	if (!IsValidSign1Handle(h)) {
 		CHECK_CONDITION(false, COSE_ERR_INVALID_HANDLE);
 	errorReturn:
 		return false;
@@ -236,17 +236,17 @@ bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pKey, cose_errback * perr)
 }
 
 
-static bool _COSE_Sign0_validate(HCOSE_SIGN0 hSign, const byte *pKey, size_t keySize, cose_errback * perr)
+static bool _COSE_Sign1_validate(HCOSE_SIGN1 hSign, const byte *pKey, size_t keySize, cose_errback * perr)
 {
     bool f;
-    COSE_Sign0Message * pSign;
+    COSE_Sign1Message * pSign;
     const cn_cbor * cnContent;
     const cn_cbor * cnProtected;
 
-    CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_HANDLE);
+    CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
     CHECK_CONDITION((pKey != NULL), COSE_ERR_INVALID_HANDLE);
 
-    pSign = (COSE_Sign0Message *)hSign;
+    pSign = (COSE_Sign1Message *)hSign;
 
     cnContent = _COSE_arrayget_int(&pSign->m_message, INDEX_BODY);
     CHECK_CONDITION(cnContent != NULL && cnContent->type == CN_CBOR_BYTES, COSE_ERR_INVALID_PARAMETER);
@@ -263,7 +263,7 @@ errorReturn:
 }
 
 
-bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCose, cose_errback * perr)
+bool COSE_Sign1_validate_with_cose_key(HCOSE_SIGN1 hSign, const cn_cbor * pKeyCose, cose_errback * perr)
 {
     bool status = false;
     byte pKey[1024];
@@ -272,40 +272,40 @@ bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCo
     // Does NULL check for pKeyCose
     status = GetECKeyFromCoseKeyObj(pKeyCose, pKey, sizeof(pKey), &keySize, perr);
 
-    return (status) ? _COSE_Sign0_validate(hSign, pKey, keySize, perr) : status;
+    return (status) ? _COSE_Sign1_validate(hSign, pKey, keySize, perr) : status;
 }
 
 
-bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
+bool COSE_Sign1_validate_with_raw_pk(HCOSE_SIGN1 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
 {
-    return _COSE_Sign0_validate(hSign, pKey, keySize, perr);
+    return _COSE_Sign1_validate(hSign, pKey, keySize, perr);
 }
 
 
-cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror)
+cn_cbor * COSE_Sign1_map_get_int(HCOSE_SIGN1 h, int key, int flags, cose_errback * perror)
 {
-	if (!IsValidSign0Handle(h)) {
+	if (!IsValidSign1Handle(h)) {
 		if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
 		return NULL;
 	}
 
-	return _COSE_map_get_int(&((COSE_Sign0Message *)h)->m_message, key, flags, perror);
+	return _COSE_map_get_int(&((COSE_Sign1Message *)h)->m_message, key, flags, perror);
 }
 
 
-bool COSE_Sign0_map_put_int(HCOSE_SIGN0 h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
+bool COSE_Sign1_map_put_int(HCOSE_SIGN1 h, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * perr)
 {
-	CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+	CHECK_CONDITION(IsValidSign1Handle(h), COSE_ERR_INVALID_HANDLE);
 	CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-	return _COSE_map_put(&((COSE_Sign0Message *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perr);
+	return _COSE_map_put(&((COSE_Sign1Message *)h)->m_message, key, value, flags, CBOR_CONTEXT_PARAM_COMMA perr);
 
 errorReturn:
 	return false;
 }
 
 
-static bool CreateSign0AAD(COSE_Sign0Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
+static bool CreateSign1AAD(COSE_Sign1Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
 {
 	cn_cbor * pArray = NULL;
 #ifdef USE_CBOR_CONTEXT
@@ -372,7 +372,7 @@ errorReturn:
 
 
 
-bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_errback * perr)
+bool _COSE_Signer0_sign(COSE_Sign1Message * pSigner, const cn_cbor * pKey, cose_errback * perr)
 {
 #ifdef USE_CBOR_CONTEXT
 	cn_cbor_context * context = &pSigner->m_message.m_allocContext;
@@ -410,7 +410,7 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	}
 
 
-	if (!CreateSign0AAD(pSigner, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
+	if (!CreateSign1AAD(pSigner, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
 
 	switch (alg) {
 #ifdef USE_ECDSA_SHA_256
@@ -440,7 +440,7 @@ bool _COSE_Signer0_sign(COSE_Sign0Message * pSigner, const cn_cbor * pKey, cose_
 	return f;
 }
 
-bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr)
+bool _COSE_Signer0_validate(COSE_Sign1Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr)
 {
 	byte * pbToSign = NULL;
 	int alg;
@@ -468,7 +468,7 @@ bool _COSE_Signer0_validate(COSE_Sign0Message * pSign, const byte *pKey, size_t 
 	}
 
     //  Build protected headers
-    if (!CreateSign0AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
+    if (!CreateSign1AAD(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
 
     switch (alg) {
 #ifdef USE_ECDSA_SHA_256
@@ -506,21 +506,21 @@ errorReturn:
 
 
 //This function is currently not used by core or by tests, in case we will need to use this function we need to change all cn-cbor functionality to tinycbor.
-bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 h, int key,/* cn_cbor * value,*/ int flags,  cose_errback * perr)
+bool COSE_Sign1_map_put_int_tiny(HCOSE_SIGN1 h, int key,/* cn_cbor * value,*/ int flags,  cose_errback * perr)
 {
-    CHECK_CONDITION(IsValidSign0Handle(h), COSE_ERR_INVALID_HANDLE);
+    CHECK_CONDITION(IsValidSign1Handle(h), COSE_ERR_INVALID_HANDLE);
     //CHECK_CONDITION(value != NULL, COSE_ERR_INVALID_PARAMETER);
 
-    return _COSE_map_put_tiny(&((COSE_Sign0Message *)h)->m_message, key, /*value, */flags,  perr);
+    return _COSE_map_put_tiny(&((COSE_Sign1Message *)h)->m_message, key, /*value, */flags,  perr);
 
 errorReturn:
     return false;
 }
-bool COSE_Sign0_Free(HCOSE_SIGN0 h)
+bool COSE_Sign1_Free(HCOSE_SIGN1 h)
 {
-    COSE_Sign0Message * pMessage = (COSE_Sign0Message *)h;
+    COSE_Sign1Message * pMessage = (COSE_Sign1Message *)h;
 
-    if (!IsValidSign0Handle(h)) return false;
+    if (!IsValidSign1Handle(h)) return false;
 
     //  Check reference counting
     if (pMessage->m_message.m_refCount > 1) {
@@ -528,13 +528,13 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 h)
         return true;
     }
 
-    _COSE_RemoveFromList(&Sign0Root, &pMessage->m_message);
+    _COSE_RemoveFromList(&Sign1Root, &pMessage->m_message);
 
     COSE_FREE(pMessage);
 
     return true;
 }
-bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
+bool _COSE_Signer0_validate_tiny(COSE_Sign1Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr);
 
 /** Validates a COSE based on the pKey.
 * @param hSign The whole decoded COSE (get by using COSE_Decode() or COSE_Init())
@@ -545,20 +545,20 @@ bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, si
 *       true in case of success or false otherwise.
 */
 
-static bool _COSE_Sign0_validate_tiny(HCOSE_SIGN0 hSign, const byte *pKey, size_t keySize, cose_errback * perr)
+static bool _COSE_Sign1_validate_tiny(HCOSE_SIGN1 hSign, const byte *pKey, size_t keySize, cose_errback * perr)
 {
     bool f;
-    COSE_Sign0Message * pSign;
+    COSE_Sign1Message * pSign;
     CborParser parser;
     CborValue value;
     CborValue  content_value;
     CborValue protected_value;
     CborError cbor_err = CborNoError;
 
-    CHECK_CONDITION(IsValidSign0Handle(hSign), COSE_ERR_INVALID_HANDLE);
+    CHECK_CONDITION(IsValidSign1Handle(hSign), COSE_ERR_INVALID_HANDLE);
     CHECK_CONDITION((pKey != NULL), COSE_ERR_INVALID_HANDLE);
 
-    pSign = (COSE_Sign0Message *)hSign;
+    pSign = (COSE_Sign1Message *)hSign;
 
     //Parse coseBuffer
     cbor_err = cbor_parser_init(pSign->m_message.message_cbor.buffer, pSign->m_message.message_cbor.buffer_size, CborIteratorFlag_NegativeInteger, &parser, &value);
@@ -581,14 +581,14 @@ errorReturn:
     return false;
 }
 
-bool COSE_Sign0_validate_with_raw_pk_tiny(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
+bool COSE_Sign1_validate_with_raw_pk_tiny(HCOSE_SIGN1 hSign, const byte * pKey, size_t keySize, cose_errback * perr)
 {
-    return _COSE_Sign0_validate_tiny(hSign, pKey, keySize, perr);
+    return _COSE_Sign1_validate_tiny(hSign, pKey, keySize, perr);
 }
 
 
 /*  This function uses tiny cbor functionality */
-bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr)
+bool COSE_Sign1_validate_with_cose_key_buffer(HCOSE_SIGN1 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr)
 {
     bool status = false;
     byte pKey[1024];
@@ -597,20 +597,20 @@ bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t *
     // Does NULL check for pKeyCose
     status = GetECKeyFromCoseBuffer(coseEncBuffer, coseEncBufferSize, pKey, sizeof(pKey), &keySize, perr);
 
-    return (status) ? _COSE_Sign0_validate_tiny(hSign, pKey, keySize, perr) : status;
+    return (status) ? _COSE_Sign1_validate_tiny(hSign, pKey, keySize, perr) : status;
 }
 
-bool  COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror)
+bool  COSE_Sign1_map_get_int_tiny(HCOSE_SIGN1 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror)
 {
-    if (!IsValidSign0Handle(h)) {
+    if (!IsValidSign1Handle(h)) {
         if (perror != NULL) perror->err = COSE_ERR_INVALID_HANDLE;
         return NULL;
     }
 
-    return _COSE_map_get_int_tiny(&((COSE_Sign0Message *)h)->m_message, key, flags, out_map_value, out_map_value_size, perror);
+    return _COSE_map_get_int_tiny(&((COSE_Sign1Message *)h)->m_message, key, flags, out_map_value, out_map_value_size, perror);
 }
 
-static bool CreateSign0AAD_tiny(COSE_Sign0Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
+static bool CreateSign1AAD_tiny(COSE_Sign1Message * pMessage, byte ** ppbToSign, size_t * pcbToSign, char * szContext, cose_errback * perr)
 {
 
     //size_t cbToSign = 0;
@@ -705,7 +705,7 @@ errorReturn:
 }
 
 
-bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr)
+bool _COSE_Signer0_validate_tiny(COSE_Sign1Message * pSign, const byte *pKey, size_t keySize, cose_errback * perr)
 {
     byte * pbToSign = NULL;
     int alg;
@@ -738,7 +738,7 @@ bool _COSE_Signer0_validate_tiny(COSE_Sign0Message * pSign, const byte *pKey, si
 
 
     //  Build protected headers
-    if (!CreateSign0AAD_tiny(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
+    if (!CreateSign1AAD_tiny(pSign, &pbToSign, &cbToSign, "Signature1", perr)) goto errorReturn;
 
     switch (alg) {
 #ifdef USE_ECDSA_SHA_256
@@ -760,15 +760,15 @@ errorReturn:
     return fRet;
 }
 
-HCOSE_SIGN0 _COSE_Sign0_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, COSE_Sign0Message * pIn, cose_errback * perr)
+HCOSE_SIGN1 _COSE_Sign1_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, COSE_Sign1Message * pIn, cose_errback * perr)
 {
-    COSE_Sign0Message * pobj = pIn;
+    COSE_Sign1Message * pobj = pIn;
     cose_errback error = { 0 };
 
     if (perr == NULL) perr = &error;
 
-    //Allocate memory for COSE sign0 
-    if (pobj == NULL) pobj = (COSE_Sign0Message *)COSE_CALLOC(1, sizeof(COSE_Sign0Message), context);
+    //Allocate memory for COSE sign1 
+    if (pobj == NULL) pobj = (COSE_Sign1Message *)COSE_CALLOC(1, sizeof(COSE_Sign1Message), context);
     CHECK_CONDITION(pobj != NULL, COSE_ERR_OUT_OF_MEMORY);
 
     //Init the allocated memory using inout cose buffer
@@ -777,9 +777,9 @@ HCOSE_SIGN0 _COSE_Sign0_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t 
     }
 
     //Insert the message data to global list
-    if (pIn == NULL) _COSE_InsertInList(&Sign0Root, &pobj->m_message);
+    if (pIn == NULL) _COSE_InsertInList(&Sign1Root, &pobj->m_message);
 
-    return(HCOSE_SIGN0)pobj;
+    return(HCOSE_SIGN1)pobj;
 
 errorReturn:
     if (pobj != NULL) {

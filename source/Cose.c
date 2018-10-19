@@ -187,16 +187,16 @@ static HCOSE _COSE_Create_HCOSE(const cn_cbor *coseObj, int * ptype, COSE_object
         }
         break;
 
-    case COSE_sign0_object:
-        h = (HCOSE)_COSE_Sign0_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
+    case COSE_sign1_object:
+        h = (HCOSE)_COSE_Sign1_Init_From_Object(cborRoot, NULL, CBOR_CONTEXT_PARAM_COMMA perr);
         if (h == NULL) {
             goto errorReturn;
         }
 
-        // By default _COSE_Sign0_Init_From_Object sets pSign0->m_message.m_ownMsg to 1
-        COSE_Sign0Message *pSign0 = (COSE_Sign0Message *)(h);
+        // By default _COSE_Sign1_Init_From_Object sets pSign1->m_message.m_ownMsg to 1
+        COSE_Sign1Message *pSign1 = (COSE_Sign1Message *)(h);
         if (!isOwner) {
-            pSign0->m_message.m_ownMsg = 0;
+            pSign1->m_message.m_ownMsg = 0;
         }
         break;
 
@@ -752,16 +752,16 @@ static HCOSE _COSE_Create_HCOSE_tiny(const uint8_t *coseBuffer, size_t coseBuffe
     //Init HCOSE
     switch ((COSE_object_type)*ptype) {
 
-    case COSE_sign0_object:
-        h = (HCOSE)_COSE_Sign0_Init_From_Object_tiny(coseBuffer, coseBufferSize, NULL, perr);
+    case COSE_sign1_object:
+        h = (HCOSE)_COSE_Sign1_Init_From_Object_tiny(coseBuffer, coseBufferSize, NULL, perr);
         if (h == NULL) {
             goto errorReturn;
         }
 
-        // By default _COSE_Sign0_Init_From_Object sets pSign0->m_message.m_ownMsg to 1
-        COSE_Sign0Message *pSign0 = (COSE_Sign0Message *)(h);
+        // By default _COSE_Sign1_Init_From_Object sets pSign1->m_message.m_ownMsg to 1
+        COSE_Sign1Message *pSign1 = (COSE_Sign1Message *)(h);
         if (!isOwner) {
-            pSign0->m_message.m_ownMsg = 0;
+            pSign1->m_message.m_ownMsg = 0;
         }
         break;
 

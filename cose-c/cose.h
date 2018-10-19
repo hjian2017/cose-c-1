@@ -47,7 +47,7 @@ typedef unsigned char byte;
 typedef struct _cose * HCOSE;
 typedef struct _cose_sign * HCOSE_SIGN;
 typedef struct _cose_signer * HCOSE_SIGNER;
-typedef struct _cose_sign0 * HCOSE_SIGN0;
+typedef struct _cose_sign1 * HCOSE_SIGN1;
 typedef struct _cose_encrypt * HCOSE_ENCRYPT;
 typedef struct _cose_enveloped * HCOSE_ENVELOPED;
 typedef struct _cose_recipient * HCOSE_RECIPIENT;
@@ -97,7 +97,7 @@ typedef struct _cose_errback {
 typedef enum {
 	COSE_unknown_object = 0,
 	COSE_sign_object = 98,
-	COSE_sign0_object = 18,
+	COSE_sign1_object = 18,
 	COSE_enveloped_object = 96,
 	COSE_encrypt_object = 16,
 	COSE_mac_object = 97,
@@ -216,7 +216,7 @@ typedef enum {
 *
 * The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
 * Note: If a COSE is initialized using this function, coseObj provided will NOT be freed when calling COSE_<type>_Free(). caller must free it seperately.
-* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign0_object, since this is the only type currently in use.
+* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign1_object, since this is the only type currently in use.
 *        to support this functionality for other types, then inside the _COSE_Create_HCOSE() functions that COSE_Init() calls,
 *        we should update the correct owner flag in the COSE object of that type.
 *
@@ -384,23 +384,23 @@ bool COSE_Signer_SetExternal(HCOSE_SIGNER hcose, const byte * pbExternalData, si
  *  Sign routines
  */
 
-HCOSE_SIGN0 COSE_Sign0_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
+HCOSE_SIGN1 COSE_Sign1_Init(COSE_INIT_FLAGS flags, CBOR_CONTEXT_COMMA cose_errback * perr);
 
 
-bool COSE_Sign0_SetContent(HCOSE_SIGN0 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
-bool COSE_Sign0_SetExternal(HCOSE_SIGN0 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
+bool COSE_Sign1_SetContent(HCOSE_SIGN1 cose, const byte * rgbContent, size_t cbContent, cose_errback * errp);
+bool COSE_Sign1_SetExternal(HCOSE_SIGN1 hcose, const byte * pbExternalData, size_t cbExternalData, cose_errback * perr);
 
-bool COSE_Sign0_Sign(HCOSE_SIGN0 h, const cn_cbor * pkey, cose_errback * perr);
+bool COSE_Sign1_Sign(HCOSE_SIGN1 h, const cn_cbor * pkey, cose_errback * perr);
 
 
 // Validate with a user provided public key
-bool COSE_Sign0_validate_with_raw_pk(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
+bool COSE_Sign1_validate_with_raw_pk(HCOSE_SIGN1 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
 
 // Validate with a COSE_Key object (a cbor map within the cwt, check out RFC 8152)
-bool COSE_Sign0_validate_with_cose_key(HCOSE_SIGN0 hSign, const cn_cbor * pKeyCose, cose_errback * perr);
+bool COSE_Sign1_validate_with_cose_key(HCOSE_SIGN1 hSign, const cn_cbor * pKeyCose, cose_errback * perr);
 
-cn_cbor * COSE_Sign0_map_get_int(HCOSE_SIGN0 h, int key, int flags, cose_errback * perror);
-bool COSE_Sign0_map_put_int(HCOSE_SIGN0 cose, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * errp);
+cn_cbor * COSE_Sign1_map_get_int(HCOSE_SIGN1 h, int key, int flags, cose_errback * perror);
+bool COSE_Sign1_map_put_int(HCOSE_SIGN1 cose, int key, cn_cbor * value, int flags, CBOR_CONTEXT_COMMA cose_errback * errp);
 
 bool GetECKeyFromCoseKeyObj(const cn_cbor *coseObj, byte *ecKeyOut, size_t ecKeyOutSize, size_t *ecKeySizeOut, cose_errback *perr);
 
@@ -421,21 +421,21 @@ extern cn_cbor * cn_cbor_clone(const cn_cbor * pIn, CBOR_CONTEXT_COMMA cn_cbor_e
 extern cn_cbor * cn_cbor_tag_create(int tag, cn_cbor * child, CBOR_CONTEXT_COMMA cn_cbor_errback * perr);
 extern cn_cbor * cn_cbor_bool_create(int boolValue, CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
 extern cn_cbor * cn_cbor_null_create(CBOR_CONTEXT_COMMA cn_cbor_errback * errp);
-bool COSE_Sign0_Free(HCOSE_SIGN0 cose CBOR_CONTEXT);
+bool COSE_Sign1_Free(HCOSE_SIGN1 cose CBOR_CONTEXT);
 #endif
 
 
 
 
 #ifdef USE_TINY_CBOR
-bool COSE_Sign0_map_put_int_tiny(HCOSE_SIGN0 cose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * errp);
-bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
+bool COSE_Sign1_map_put_int_tiny(HCOSE_SIGN1 cose, int key, /*cn_cbor * value,*/ int flags,  cose_errback * errp);
+bool COSE_Sign1_Free(HCOSE_SIGN1 cose);
 /**
 * Create an HCOSE from a preallocated, decoded CBOR object containing a COSE.
 *
 * The function allocates memory dynamically, and the handle returned must be freed by COSE_<type>_Free() function (type depends on struct_type).
 * Note: If a COSE is initialized using this function, coseObj provided will NOT be freed when calling COSE_<type>_Free(). caller must free it seperately.
-* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign0_object, since this is the only type currently in use.
+* FIXME: Currently, coseObj will not be freed only if struct_type is COSE_sign1_object, since this is the only type currently in use.
 *        to support this functionality for other types, then inside the _COSE_Create_HCOSE() functions that COSE_Init() calls,
 *        we should update the correct owner flag in the COSE object of that type.
 *
@@ -454,11 +454,11 @@ bool COSE_Sign0_Free(HCOSE_SIGN0 cose);
 HCOSE COSE_Init_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, int * ptype, COSE_object_type struct_type, cose_errback * perr);
 
 // Validate with a user provided public key buffer
-bool COSE_Sign0_validate_with_cose_key_buffer(HCOSE_SIGN0 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr);
+bool COSE_Sign1_validate_with_cose_key_buffer(HCOSE_SIGN1 hSign, const uint8_t * coseEncBuffer, size_t coseEncBufferSize, cose_errback * perr);
 
 
 // Validate with a user provided public key
-bool COSE_Sign0_validate_with_raw_pk_tiny(HCOSE_SIGN0 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
+bool COSE_Sign1_validate_with_raw_pk_tiny(HCOSE_SIGN1 hSign, const byte * pKey, size_t keySize, cose_errback * perr);
 
 /*  This function uses tiny cbor functionality */
 bool GetECKeyFromCoseBuffer(const uint8_t *coseEncBuffer, size_t coseEncBufferSize, byte *ecKeyOut, size_t ecKeyBufferSize, size_t *ecKeySizeOut, cose_errback *perr);
@@ -479,7 +479,7 @@ bool GetECKeyFromCoseBuffer(const uint8_t *coseEncBuffer, size_t coseEncBufferSi
 *       NULL if error has occurred.
 */
 HCOSE COSE_Decode_tiny(const byte * rgbData, size_t cbData, int * ptype, COSE_object_type struct_type, cose_errback * perr);
-bool  COSE_Sign0_map_get_int_tiny(HCOSE_SIGN0 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror);
+bool  COSE_Sign1_map_get_int_tiny(HCOSE_SIGN1 h, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror);
 #endif
 
 

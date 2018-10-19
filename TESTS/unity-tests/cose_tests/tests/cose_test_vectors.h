@@ -22,7 +22,7 @@ char sign_pass_01[] = "{" \
 "\"title\" : \"sign - pass - 01: Redo protected\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\" : {"\
+"\"sign1\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" :\"11\","\
@@ -55,7 +55,7 @@ char sign_pass_02[] = "{" \
 "\"title\":\"sign-pass-02: External\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\" : {"\
+"\"sign1\" : {"\
 "\"key\":{"\
 "\"kty\" : \"EC\","\
 "\"kid\" : \"11\","\
@@ -88,7 +88,7 @@ char sign_pass_03[] = "{" \
 "\"title\":\"sign-pass-03: Remove CBOR Tag\","\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\" : {"\
+"\"sign1\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" : \"11\","\
@@ -127,7 +127,7 @@ char sign_fail_01[] = "{" \
 "\"fail\" : true,"\
 "\"input\" : {"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\" : {"\
+"\"sign1\" : {"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\" : \"11\","\
@@ -163,7 +163,7 @@ char sign_fail_02[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\":{"\
+"\"sign1\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -199,7 +199,7 @@ char sign_fail_03[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\":{"\
+"\"sign1\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -237,7 +237,7 @@ char sign_fail_04[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\":{"\
+"\"sign1\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -275,7 +275,7 @@ char sign_fail_05[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\":{"\
+"\"sign1\":{"\
 "\"key\":{"\
 "\"kty\":\"EC\","\
 "\"kid\":\"11\","\
@@ -313,7 +313,7 @@ char sign_fail_06[] = "{" \
 "\"fail\":true,"\
 "\"input\":{"\
 "\"plaintext\":\"This is the content.\","\
-"\"sign0\":{"\
+"\"sign1\":{"\
 "\"protected\":{"\
 "\"alg\":\"ES256\","\
 "\"ctyp\":0"\

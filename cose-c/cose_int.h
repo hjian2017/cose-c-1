@@ -100,7 +100,7 @@ typedef struct {
 
 typedef struct {
 	COSE m_message;	    // The message object
-} COSE_Sign0Message;
+} COSE_Sign1Message;
 #ifndef USE_TINY_CBOR
 struct _SignerInfo {
 	COSE m_message;
@@ -302,9 +302,9 @@ extern bool _COSE_SignerInfo_Free(COSE_SignerInfo * pSigner CBOR_CONTEXT);
 extern bool _COSE_Signer_validate(COSE_SignMessage * pSign, COSE_SignerInfo * pSigner, const cn_cbor * pbContent, const cn_cbor * pbProtected, cose_errback * perr);
 
 
-// Sign0 items
-extern HCOSE_SIGN0 _COSE_Sign0_Init_From_Object(cn_cbor * cbor, COSE_Sign0Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr);
-extern void _COSE_Sign0_Release(COSE_Sign0Message * p CBOR_CONTEXT);
+// Sign1 items
+extern HCOSE_SIGN1 _COSE_Sign1_Init_From_Object(cn_cbor * cbor, COSE_Sign1Message * pIn, CBOR_CONTEXT_COMMA cose_errback * perr);
+extern void _COSE_Sign1_Release(COSE_Sign1Message * p CBOR_CONTEXT);
 
 //  Mac-ed items
 extern HCOSE_MAC _COSE_Mac_Init_From_Object(cn_cbor *, COSE_MacMessage * pIn, CBOR_CONTEXT_COMMA cose_errback * errp);
@@ -322,7 +322,7 @@ extern HCOSE_COUNTERSIGN _COSE_CounterSign_get(COSE * pMessage, int iSigner, cos
 extern bool _COSE_CounterSign_add(COSE * pMessage, HCOSE_COUNTERSIGN hSigner, cose_errback * perr);
 extern bool _COSE_CountSign_create(COSE * pMessage, cn_cbor * pcnBody, CBOR_CONTEXT_COMMA cose_errback * perr);
 #else
-HCOSE_SIGN0 _COSE_Sign0_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, COSE_Sign0Message * pIn, cose_errback * perr);
+HCOSE_SIGN1 _COSE_Sign1_Init_From_Object_tiny(const uint8_t *coseBuffer, size_t coseBufferSize, COSE_Sign1Message * pIn, cose_errback * perr);
 //This function currently not in use
 bool _COSE_map_put_tiny(COSE * pCose, int key, /*cn_cbor * value,*/ int flags, cose_errback * perr);
 bool  _COSE_map_get_int_tiny(COSE * pcose, int key, int flags, uint8_t **out_map_value, size_t *out_map_value_size, cose_errback * perror);
